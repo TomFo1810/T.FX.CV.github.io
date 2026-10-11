@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Tom Foëx, technicien en microtechnique à Genève : expérience, formation, compétences et projets.">
+<title>Tom Foëx · Technicien en microtechnique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap">
+<style>
+/* Concept : une nuit d'atelier. Portrait en points qui réagit au curseur, couleurs chaudes vers froides, mouvement mécanique (engrenages, axes linéaires). Un seul thème, volontairement sombre. */
+:root {
+  --bg: #0a0b09;
+  --bg2: #121410;
+  --fg: #f3efe8;
+  --muted: #9a9c93;
+  --line: rgba(255, 255, 255, 0.1);
+  --coral: #8f9a5f;
+  --amber: #b9c18a;
+  --violet: #8a8d84;
+  --cyan: #f2efe8;
+  --font-display: "Syne", "Arial Black", Arial, sans-serif;
+  --font-body: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 400 1.0625rem/1.65 var(--font-body);
+  padding-inline: 0; padding-block: 0; overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+h2 { overflow-wrap: break-word; font-size: clamp(2.2rem, 6vw, 4.2rem); line-height: 1; font-weight: 800; letter-spacing: -0.02em; }
+h3 { font-size: 1.3rem; line-height: 1.2; font-weight: 700; }
+p { margin: 0; max-width: 62ch; }
+ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.55rem; max-width: 64ch; }
+li { position: relative; padding-left: 1.3rem; color: #d6d7d0; }
+li::before { content: ""; position: absolute; left: 0; top: 0.8em; width: 0.6rem; height: 2px; background: var(--c, var(--amber)); border-radius: 2px; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.mono { font: 500 0.75rem/1.3 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; }
+.muted { color: var(--muted); }
+
+/* fond : lueurs qui dérivent, grille de plan, halo du curseur */
+.bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.blob { position: absolute; width: 38rem; max-width: 90vw; aspect-ratio: 1; border-radius: 50%; filter: blur(90px); opacity: 0.32; }
+.b1 { background: var(--violet); opacity: 0.2; top: -12rem; right: -10rem; animation: drift1 30s ease-in-out infinite alternate; }
+.b2 { background: var(--coral); bottom: -14rem; left: -12rem; opacity: 0.2; animation: drift2 36s ease-in-out infinite alternate; }
+.b3 { background: var(--cyan); top: 45%; left: 55%; opacity: 0.04; animation: drift1 42s ease-in-out infinite alternate-reverse; }
+@keyframes drift1 { to { transform: translate(-8rem, 10rem) scale(1.15); } }
+@keyframes drift2 { to { transform: translate(10rem, -8rem) scale(1.1); } }
+.cursor-glow { position: fixed; left: 0; top: 0; width: 26rem; height: 26rem; margin: -13rem 0 0 -13rem; border-radius: 50%; z-index: 0; pointer-events: none; background: radial-gradient(circle, rgba(185, 193, 138, 0.13), transparent 62%); transition: opacity 0.4s; opacity: 0; }
+@media (hover: none) { .cursor-glow { display: none; } }
+
+main { position: relative; z-index: 1; overflow-x: clip; }
+.wrap { width: 100%; max-width: 76rem; margin-inline: auto; padding-inline: max(1rem, 4vw); }
+section { padding-block: clamp(3rem, 7vw, 5.5rem); scroll-margin-top: 4rem; }
+
+/* progression + navigation */
+.progress { position: fixed; top: 0; left: 0; height: 3px; width: 100%; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, #b9c18a, #8f9a5f); z-index: 30; }
+.nav { position: fixed; z-index: 20; top: calc(env(safe-area-inset-top, 0px) + 0.8rem); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 0.25rem; padding: 0.35rem; background: rgba(18, 20, 16, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 999px; max-width: calc(100vw - 1.5rem); overflow-x: auto; scrollbar-width: none; }
+.nav a { text-decoration: none; padding: 0.5rem 0.9rem; border-radius: 999px; color: var(--muted); transition: color 0.2s, background 0.2s; white-space: nowrap; }
+.nav a:hover, .nav a.on { color: var(--fg); background: rgba(255, 255, 255, 0.08); }
+.nav .home { font-family: var(--font-display); font-weight: 800; color: var(--amber); letter-spacing: 0; text-transform: none; font-size: 0.95rem; }
+@media (max-width: 34rem) { .nav a { padding: 0.5rem 0.4rem; font-size: 0.6rem; letter-spacing: 0.05em; } .nav .home { display: none; } }
+
+/* hero */
+.hero { position: relative; padding-block: clamp(6.5rem, 12vw, 9rem) clamp(3rem, 6vw, 5rem); }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 3.5rem 3.5rem; -webkit-mask-image: radial-gradient(ellipse 70% 70% at 60% 40%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse 70% 70% at 60% 40%, #000 20%, transparent 75%); opacity: 0.55; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 2.5rem 3rem; align-items: center; }
+@media (max-width: 56rem) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }
+.hero-text { display: grid; gap: 1.6rem; min-width: 0; }
+.eyebrow { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--amber); }
+.eyebrow::before { content: ""; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 0 rgba(242, 239, 232, 0.6); animation: ping 2.4s ease-out infinite; }
+@keyframes ping { to { box-shadow: 0 0 0 0.8rem rgba(242, 239, 232, 0); } }
+.name { font-size: clamp(4.2rem, 15vw, 10.5rem); line-height: 0.86; font-weight: 800; letter-spacing: -0.045em; display: grid; }
+.name .line { display: block; white-space: nowrap; }
+.name span { display: inline-block; color: var(--c, var(--fg)); animation: letter 1s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--i) * 70ms + 0.2s); }
+@keyframes letter { from { opacity: 0.2; transform: translateY(55%) rotate(5deg); filter: blur(10px); } }
+.verbs { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.4rem, 3.4vw, 2.1rem); line-height: 1.2; }
+.vwrap { display: inline-grid; vertical-align: bottom; }
+.v { grid-area: 1 / 1; color: var(--amber); opacity: 0; transform: translateY(0.6em); filter: blur(6px); transition: opacity 0.6s, transform 0.6s, filter 0.6s; }
+.v.on { opacity: 1; transform: none; filter: none; }
+.v.out { opacity: 0; transform: translateY(-0.6em); filter: blur(6px); }
+.lead { color: #cfd0c9; font-size: 1.12rem; }
+.cta { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.btn { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; padding: 0.85rem 1.4rem; border-radius: 999px; font-weight: 600; transition: transform 0.25s, box-shadow 0.25s, background 0.25s; }
+.btn.solid { background: linear-gradient(100deg, var(--amber), var(--coral)); color: #10120b; }
+.btn.solid:hover { transform: translateY(-2px); box-shadow: 0 0.8rem 2rem -0.6rem rgba(143, 154, 95, 0.7); }
+.btn.ghost { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); }
+.btn.ghost:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+
+.portrait { position: relative; width: 100%; max-width: 27rem; justify-self: center; aspect-ratio: 182 / 234; }
+.portrait::before { content: ""; position: absolute; inset: -12% -16%; z-index: -1; background: radial-gradient(closest-side, rgba(138, 141, 132, 0.34), rgba(143, 154, 95, 0.14) 55%, transparent 80%); filter: blur(10px); }
+.portrait canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+.portrait .cap { position: absolute; left: 0; bottom: -2rem; color: var(--muted); }
+
+/* bande défilante */
+.marquee { border-block: 1px solid var(--line); overflow: hidden; background: rgba(18, 20, 16, 0.5); padding-block: 1.1rem; }
+.track { display: flex; width: max-content; animation: slide 46s linear infinite; }
+.marquee:hover .track { animation-play-state: paused; }
+.track span { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.2rem, 3vw, 1.9rem); padding-inline: 1.6rem; color: transparent; -webkit-text-stroke: 1px rgba(243, 239, 232, 0.5); white-space: nowrap; }
+.track span:nth-child(3n+1) { -webkit-text-stroke-color: var(--amber); }
+.track span:nth-child(3n+2) { color: var(--fg); -webkit-text-stroke: 0; }
+.track i { color: var(--coral); font-style: normal; align-self: center; }
+@keyframes slide { to { transform: translateX(-50%); } }
+
+/* titres de section */
+.sec-head { display: grid; gap: 1rem; margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+.sec-head .mono { color: var(--c, var(--amber)); display: flex; align-items: center; gap: 0.8rem; }
+.sec-head .mono::after { content: ""; height: 1px; width: 4rem; background: currentColor; opacity: 0.6; }
+.hl { background: linear-gradient(100deg, #cfd6a8, #a3ad74); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* chiffres */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; }
+.stat { padding: 1.6rem 1.4rem; border: 1px solid var(--line); background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)); display: grid; gap: 0.5rem; min-width: 0; border-radius: 1.1rem; }
+.stat b { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.6rem, 6vw, 3.8rem); line-height: 1; color: var(--c); font-variant-numeric: tabular-nums; }
+.stat b small { font-size: 0.4em; color: var(--muted); font-weight: 600; margin-left: 0.2em; }
+.stat span { color: var(--muted); font-size: 0.95rem; }
+
+/* parcours */
+.tl-wrap { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr); gap: 2rem 3.5rem; align-items: start; }
+.tl-side h2 { font-size: clamp(2rem, 3.6vw, 3rem); overflow-wrap: break-word; }
+@media (max-width: 56rem) { .tl-wrap { grid-template-columns: minmax(0, 1fr); } }
+.tl-side { position: sticky; top: 6rem; display: grid; gap: 1.4rem; }
+@media (max-width: 56rem) { .tl-side { position: static; } }
+.legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.legend span { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--muted); }
+.legend span::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--c); }
+.timeline { position: relative; display: grid; gap: 1.2rem; padding-left: 2.2rem; }
+.timeline::before { content: ""; position: absolute; left: 0.45rem; top: 0.4rem; bottom: 0.4rem; width: 2px; background: var(--line); }
+.timeline .fill { position: absolute; left: 0.45rem; top: 0.4rem; width: 2px; height: 0; background: linear-gradient(#b9c18a, #8f9a5f); box-shadow: 0 0 1rem rgba(185, 193, 138, 0.6); }
+.item { position: relative; padding: 1.5rem 1.5rem 1.6rem; border: 1px solid var(--line); border-radius: 1.1rem; background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)); display: grid; gap: 0.7rem; min-width: 0; }
+.item::before { content: ""; position: absolute; left: -2.2rem; top: 1.75rem; width: 0.95rem; height: 0.95rem; border-radius: 50%; background: var(--bg); border: 3px solid var(--c); box-shadow: 0 0 0 0.35rem rgba(10, 11, 9, 1); }
+.item .when { color: var(--c); }
+.item .place { color: var(--muted); font-size: 0.95rem; margin-top: -0.25rem; }
+.item.f { --c: var(--violet); } .item.e { --c: var(--coral); } .item.c { --c: var(--cyan); }
+
+/* compétences */
+.bento { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+.card { position: relative; overflow: hidden; padding: 1.8rem 1.6rem 2rem; border: 1px solid var(--line); border-radius: 1.2rem; background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)); display: grid; gap: 0.7rem; align-content: start; min-width: 0; transition: transform 0.35s, border-color 0.35s; }
+.card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; background: radial-gradient(16rem circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--c) 28%, transparent), transparent 62%); }
+.card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--c) 55%, transparent); }
+.card:hover::before { opacity: 1; }
+.card .ico { width: 2.6rem; height: 2.6rem; color: var(--c); }
+.card p { color: var(--muted); font-size: 0.98rem; position: relative; }
+.card h3 { position: relative; }
+.langs { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1.4rem 2rem; margin-top: 3rem; }
+.lang { display: grid; gap: 0.55rem; }
+.lang div { display: flex; justify-content: space-between; gap: 1rem; }
+.bar { height: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.09); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--amber), var(--coral)); transition: width 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s; }
+.lang.in .bar i { width: var(--w); }
+
+/* atelier : engrenages */
+.atelier { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem 4rem; align-items: center; }
+@media (max-width: 56rem) { .atelier { grid-template-columns: minmax(0, 1fr); } }
+.atelier .txt { display: grid; gap: 1.2rem; }
+.train { width: 100%; max-width: 34rem; justify-self: center; }
+.train text { font: 500 9px var(--font-mono); fill: var(--muted); letter-spacing: 0.08em; }
+.gb { stroke-width: 1.6; stroke-linejoin: round; fill-rule: evenodd; }
+.pitch { fill: none; stroke: rgba(255, 255, 255, 0.28); stroke-width: 0.7; stroke-dasharray: 3 4; }
+.axis { stroke: rgba(255, 255, 255, 0.14); stroke-width: 0.8; }
+
+/* projet */
+.proj { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 2rem 3.5rem; align-items: center; }
+@media (max-width: 56rem) { .proj { grid-template-columns: minmax(0, 1fr); } }
+.bench { border: 1px solid var(--line); border-radius: 1.2rem; background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)); padding: 1rem; display: grid; gap: 0.8rem; min-width: 0; }
+.bench svg { width: 100%; height: auto; display: block; }
+.bench text { font: 500 8.5px var(--font-mono); fill: var(--muted); letter-spacing: 0.1em; }
+.readout { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; font: 500 0.82rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.readout b { color: var(--cyan); font-weight: 500; }
+.proj .col { display: grid; gap: 1.2rem; min-width: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tag { border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); color: var(--c); padding: 0.35rem 0.75rem; border-radius: 999px; }
+
+/* contact */
+.contact { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 1.6rem; padding: clamp(2rem, 7vw, 5rem); display: grid; gap: 1.6rem; background: radial-gradient(60% 90% at 90% 0%, rgba(138, 141, 132, 0.28), transparent 70%), radial-gradient(50% 80% at 0% 100%, rgba(143, 154, 95, 0.2), transparent 70%), var(--bg2); }
+.contact h2 { font-size: clamp(2.4rem, 7vw, 5.2rem); max-width: 14ch; }
+.todo { width: fit-content; border: 1px dashed var(--amber); color: var(--amber); padding: 0.5rem 0.9rem; border-radius: 999px; }
+footer { position: relative; z-index: 1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 2rem; color: var(--muted); border-top: 1px solid var(--line); padding-block: 1.4rem; margin-top: 2rem; }
+
+/* apparition en fondu */
+.rv { opacity: 0.25; transform: translateY(28px); filter: blur(6px); transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), filter 0.9s ease; transition-delay: var(--d, 0s); }
+.rv.in { opacity: 1; transform: none; filter: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .rv { opacity: 1; transform: none; filter: none; transition: none; }
+  .blob, .track, .eyebrow::before, .name span { animation: none; }
+  .bar i { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="cursor-glow" id="glow" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<nav class="nav mono" aria-label="Navigation">
+  <a class="home" href="#haut">Tom Foëx</a>
+  <a href="#experience">Expérience</a>
+  <a href="#formation">Formation</a>
+  <a href="#competences">Compétences</a>
+  <a href="#projet">Projet</a>
+  <a href="#contact">Contact</a>
+</nav>
+
+<main id="haut">
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-text">
+        <span class="eyebrow mono">Technicien en microtechnique · Genève</span>
+        <h1 class="name" aria-label="Tom Foëx">
+          <span class="line" aria-hidden="true"><span style="--i:0;--c:#f2efe8">T</span><span style="--i:1;--c:#f2efe8">o</span><span style="--i:2;--c:#f2efe8">m</span></span>
+          <span class="line" aria-hidden="true"><span style="--i:3;--c:#a3ad74">F</span><span style="--i:4;--c:#a3ad74">o</span><span style="--i:5;--c:#a3ad74">ë</span><span style="--i:6;--c:#a3ad74">x</span></span>
+        </h1>
+        <p class="verbs">Je <span class="vwrap"><span class="v on">fabrique</span><span class="v">assemble</span><span class="v">contrôle</span><span class="v">programme</span><span class="v">dépose sous vide</span><span class="v">usine</span></span></p>
+        <p class="lead">Technicien en microtechnique et mécanique de précision : fabrication, assemblage et contrôle qualité. Usinage CNC et conventionnel, dépôt de couches minces sous ultra-vide. Je cherche un poste de technicien mécanique pour contribuer à la fabrication et à l'assemblage d'équipements électromécaniques et mécaniques.</p>
+        <div class="cta">
+          <a class="btn solid" href="#experience">Voir mon expérience</a>
+          <a class="btn ghost" href="#competences">Mes compétences</a>
+        </div>
+      </div>
+      <div class="portrait">
+        <canvas id="portrait" role="img" aria-label="Portrait de Tom Foëx composé de points qui réagissent au curseur"></canvas>
+        <span class="cap mono" id="cap">Portrait en points · bouge le curseur</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="track" id="track">
+      <span>CATIA</span><i>✦</i><span>SolidWorks</span><i>✦</i><span>PTC Creo</span><i>✦</i><span>Inventor</span><i>✦</i><span>GibbsCAM</span><i>✦</i><span>Haas CNC</span><i>✦</i><span>ISO-GPS</span><i>✦</i><span>Ultra-vide</span><i>✦</i><span>PVD</span><i>✦</i><span>TwinCAT3</span><i>✦</i><span>LabVIEW</span><i>✦</i><span>Robot ABB</span><i>✦</i>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="stats">
+        <div class="stat rv" style="--c:var(--amber)"><b data-count="6">6</b><span>postes occupés depuis 2020, de la logistique au CERN</span></div>
+        <div class="stat rv" style="--c:var(--coral);--d:.08s"><b data-count="5">5</b><span>logiciels de CAO et de FAO utilisés</span></div>
+        <div class="stat rv" style="--c:var(--violet);--d:.16s"><b data-count="4">4</b><span>langues : français, anglais, portugais, roumain</span></div>
+        <div class="stat rv" style="--c:var(--cyan);--d:.24s"><b>10<small style="font-size:.55em;vertical-align:.5em">-8</small><small>bar</small></b><span>niveau de vide visé dans le procédé PVD, de 10⁻⁶ à 10⁻⁸ bar</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="experience">
+    <div class="wrap tl-wrap">
+      <div class="tl-side">
+        <div class="sec-head" style="margin:0;--c:var(--amber)">
+          <span class="mono rv">Expérience</span>
+          <h2 class="rv">Mon <span class="hl">expérience</span></h2>
+        </div>
+        <p class="muted rv mono">Depuis 2020 · 6 postes</p>
+      </div>
+      <div class="timeline">
+        <div class="fill"></div>
+        <article class="item e rv">
+          <span class="when mono">Avril – juillet 2026</span>
+          <h3>Stage de technicien, dépôt de couches minces</h3>
+          <span class="place">CERN, Genève</span>
+          <ul style="--c:var(--amber)">
+            <li>Usinage CNC (fraiseuse Haas Mini Mill) et conventionnel de pièces mécaniques de précision, assemblage complet et tests de validation fonctionnelle.</li>
+            <li>Conception CAO sur CATIA, mise en plan de composants mécaniques, programmation d'usinage sur GibbsCAM.</li>
+            <li>Contrôle qualité et documentation technique : procédures d'inspection par caméra, rapports de conformité, traçabilité des composants en traitement thermique sous vide.</li>
+            <li>Procédé complet de revêtement en couches minces sous ultra-vide : préparation de surface, test de fuite, etching, dépôt PVD (titane, carbone), scellement.</li>
+          </ul>
+        </article>
+        <article class="item e rv">
+          <span class="when mono">Mars 2024 – janvier 2025</span>
+          <h3>Technicien de maintenance</h3>
+          <span class="place">INFATA, Genève</span>
+          <ul style="--c:var(--amber)">
+            <li>Construction, test et installation d'équipements électromécaniques, conception et programmation de systèmes techniques.</li>
+            <li>Gestion logistique technique et application des normes de sécurité.</li>
+          </ul>
+        </article>
+        <article class="item e rv">
+          <span class="when mono">Juin – juillet 2025</span>
+          <h3>Technicien de maintenance</h3>
+          <span class="place">Village du Soir, Genève</span>
+          <ul style="--c:var(--amber)">
+            <li>Gestion du matériel électrique et électronique, installation et préparation technique d'événements.</li>
+          </ul>
+        </article>
+        <article class="item e rv">
+          <span class="when mono">2023 – 2025</span>
+          <h3>Employé polyvalent</h3>
+          <span class="place">RH Expert</span>
+          <ul style="--c:var(--amber)">
+            <li>Coordination de projets, organisation et gestion d'infrastructures.</li>
+          </ul>
+        </article>
+        <article class="item e rv">
+          <span class="when mono">2021 – 2022</span>
+          <h3>Manager d'équipes</h3>
+          <span class="place">AirLoop</span>
+          <ul style="--c:var(--amber)">
+            <li>Gestion de projets, maintenance d'infrastructures, sécurité des sites.</li>
+          </ul>
+        </article>
+        <article class="item e rv">
+          <span class="when mono">2020 – 2021</span>
+          <h3>Logisticien</h3>
+          <span class="place">Gecco Distribution</span>
+          <ul style="--c:var(--amber)">
+            <li>Gestion de stock, réception et inventaire des composants et marchandises.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="formation">
+    <div class="wrap tl-wrap">
+      <div class="tl-side">
+        <div class="sec-head" style="margin:0;--c:var(--cyan)">
+          <span class="mono rv">Formation</span>
+          <h2 class="rv">Ma <span class="hl">formation</span></h2>
+        </div>
+        <p class="muted rv mono">Depuis 2019 · 3 étapes</p>
+      </div>
+      <div class="timeline">
+        <div class="fill"></div>
+        <article class="item f rv">
+          <span class="when mono">Depuis août 2025</span>
+          <h3>Technicien ES en microtechnique</h3>
+          <span class="place">École d'Horlogerie de Genève, CFPT</span>
+        </article>
+        <article class="item f rv">
+          <span class="when mono">Mars – décembre 2024</span>
+          <h3>AFP Opérateur horloger</h3>
+          <span class="place">IFAGE, Genève</span>
+          <p class="muted">Modules de base et posage-emboîtage. Examen de culture horlogère et lecture de plan, CFH, juin 2024.</p>
+        </article>
+        <article class="item f rv">
+          <span class="when mono">2019</span>
+          <h3>Baccalauréat STI2D</h3>
+          <span class="place">Lycée Lachenal, Argonay (France) · spécialisation programmation informatique</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="competences">
+    <div class="wrap">
+      <div class="sec-head" style="--c:var(--coral)">
+        <span class="mono rv">Compétences</span>
+        <h2 class="rv">Ce que je sais <span class="hl">faire</span></h2>
+      </div>
+      <div class="bento">
+        <article class="card rv" style="--c:var(--amber)">
+          <svg class="ico" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 32V12l12-6 12 6v20"/><path d="M8 32h24M14 32v-8h12v8"/><circle cx="20" cy="16" r="3"/></svg>
+          <h3>Usinage</h3><p>CNC (Haas) et usinage conventionnel, toutes machines.</p>
+        </article>
+        <article class="card rv" style="--c:var(--coral);--d:.07s">
+          <svg class="ico" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 30 20 8l14 22z"/><path d="M13 30 20 18l7 12"/></svg>
+          <h3>Conception CAO</h3><p>CATIA, SolidWorks, PTC Creo, Inventor, programmation d'usinage sur GibbsCAM.</p>
+        </article>
+        <article class="card rv" style="--c:var(--violet);--d:.14s">
+          <svg class="ico" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10h28M6 30h28M10 6v8M10 26v8M30 6v8M30 26v8"/><path d="M10 20h20M14 17l-4 3 4 3M26 17l4 3-4 3"/></svg>
+          <h3>Plans et cotation</h3><p>Lecture de plans mécaniques, cotation ISO-GPS, plans 2D et modèles 3D.</p>
+        </article>
+        <article class="card rv" style="--c:var(--cyan);--d:.07s">
+          <svg class="ico" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="10"/><path d="m26 26 8 8M13 18l4 4 7-8"/></svg>
+          <h3>Contrôle qualité</h3><p>Inspection, rapports de conformité, traçabilité des composants.</p>
+        </article>
+        <article class="card rv" style="--c:var(--amber);--d:.14s">
+          <svg class="ico" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="24" height="28" rx="12"/><path d="M14 16h12M14 22h12M17 28h6"/></svg>
+          <h3>Vide et dépôt PVD</h3><p>Ultra-vide (UHV), pulvérisation cathodique, test de fuite.</p>
+        </article>
+        <article class="card rv" style="--c:var(--coral);--d:.21s">
+          <svg class="ico" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="10" width="28" height="20" rx="3"/><path d="M12 18h6v4h-6zM22 18h6M22 22h6M20 6v4M20 30v4"/></svg>
+          <h3>Automatisation</h3><p>Beckhoff TwinCAT3 (langage structuré), LabVIEW.</p>
+        </article>
+      </div>
+      <div class="langs">
+        <div class="lang rv" style="--w:100%"><div class="mono"><span>Français</span><span class="muted">langue maternelle</span></div><div class="bar"><i></i></div></div>
+        <div class="lang rv" style="--w:88%;--d:.08s"><div class="mono"><span>Anglais</span><span class="muted">C1</span></div><div class="bar"><i></i></div></div>
+        <div class="lang rv" style="--w:68%;--d:.16s"><div class="mono"><span>Portugais</span><span class="muted">B2</span></div><div class="bar"><i></i></div></div>
+        <div class="lang rv" style="--w:52%;--d:.24s"><div class="mono"><span>Roumain</span><span class="muted">B1</span></div><div class="bar"><i></i></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="atelier">
+    <div class="wrap atelier">
+      <div class="txt">
+        <div class="sec-head" style="margin:0;--c:var(--amber)">
+          <span class="mono rv">Horlogerie</span>
+          <h2 class="rv">Une base <span class="hl">horlogère</span></h2>
+        </div>
+        <p class="lead rv">Ma formation passe par l'horlogerie : AFP d'opérateur horloger à l'IFAGE, examen de culture horlogère et lecture de plan, puis le CFPT à Genève. J'y ai appris la précision des assemblages, les modules de base et le posage-emboîtage.</p>
+        <p class="muted rv mono">Train d'engrenages Z 24 : Z 12 : Z 36</p>
+      </div>
+      <svg class="train rv" id="train" viewBox="-96 -96 400 350" role="img" aria-label="Train de trois engrenages en rotation, 24, 12 et 36 dents">
+        <defs>
+          <linearGradient id="g0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9c18a"/><stop offset="1" stop-color="#8f9a5f"/></linearGradient>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f9a5f"/><stop offset="1" stop-color="#8a8d84"/></linearGradient>
+          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a8d84"/><stop offset="1" stop-color="#f2efe8"/></linearGradient>
+        </defs>
+        <g id="axes"></g><g id="pitches"></g><g id="gears"></g>
+        <text x="-92" y="-82">Z 24</text><text x="96" y="-52">Z 12</text><text x="168" y="248">Z 36</text>
+      </svg>
+    </div>
+  </section>
+
+  <section id="projet">
+    <div class="wrap">
+      <div class="sec-head" style="--c:var(--cyan)">
+        <span class="mono rv">Projet technique</span>
+        <h2 class="rv">Banc de test pour <span class="hl">spectromètre</span></h2>
+      </div>
+      <div class="proj">
+        <div class="bench rv">
+          <svg viewBox="0 0 480 340" role="img" aria-label="Schéma animé de deux axes linéaires balayant une surface en serpentin">
+            <defs>
+              <linearGradient id="tr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b9c18a"/><stop offset="0.5" stop-color="#8f9a5f"/><stop offset="1" stop-color="#8a8d84"/></linearGradient>
+            </defs>
+            <rect x="14" y="14" width="452" height="312" rx="10" fill="none" stroke="rgba(255,255,255,0.14)"/>
+            <rect x="90" y="70" width="300" height="200" rx="4" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.22)" stroke-dasharray="4 4"/>
+            <text x="94" y="84">SURFACE À ANALYSER</text>
+            <line x1="46" y1="34" x2="46" y2="306" stroke="rgba(145,131,255,0.5)" stroke-width="5" stroke-linecap="round"/>
+            <line x1="434" y1="34" x2="434" y2="306" stroke="rgba(145,131,255,0.5)" stroke-width="5" stroke-linecap="round"/>
+            <text x="20" y="324">AXE LINÉAIRE Y</text>
+            <path id="trace" d="" pathLength="1" fill="none" stroke="url(#tr)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1"/>
+            <g id="gantry">
+              <line x1="46" y1="0" x2="434" y2="0" stroke="#8f9a5f" stroke-width="4" stroke-linecap="round"/>
+              <rect x="38" y="-11" width="16" height="22" rx="3" fill="#121410" stroke="#8a8d84" stroke-width="2"/>
+              <rect x="426" y="-11" width="16" height="22" rx="3" fill="#121410" stroke="#8a8d84" stroke-width="2"/>
+              <g id="carriage">
+                <rect x="-13" y="-13" width="26" height="26" rx="5" fill="#121410" stroke="#b9c18a" stroke-width="2"/>
+                <circle r="4" fill="#f2efe8"/>
+                <circle id="spot" r="8" fill="none" stroke="#f2efe8" stroke-width="1.5"/>
+              </g>
+            </g>
+            <text x="340" y="304">AXE LINÉAIRE X</text>
+          </svg>
+          <div class="readout"><span>X <b id="rx">0.00</b> mm</span><span>Y <b id="ry">0.00</b> mm</span><span>Balayage <b id="rp">0</b> %</span></div>
+        </div>
+        <div class="col">
+          <p class="lead rv">Conception d'un banc de test pour l'analyse de surface par spectromètre : refabrication mécanique complète de la structure, câblage électrique et programmation d'un automate industriel Beckhoff sur TwinCAT3 pour le pilotage coordonné de deux axes de moteurs linéaires.</p>
+          <p class="muted rv">Mise en service de plusieurs machines industrielles, d'un convoyeur et d'un bras robot ABB. Projet mené de la phase initiale jusqu'aux tests finaux.</p>
+          <div class="tags mono rv">
+            <span class="tag" style="--c:var(--amber)">Beckhoff</span><span class="tag" style="--c:var(--coral)">TwinCAT3</span><span class="tag" style="--c:var(--violet)">Axes linéaires</span><span class="tag" style="--c:var(--cyan)">Robot ABB</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact rv">
+        <span class="mono hl" style="width:fit-content">Contact</span>
+        <h2>Disponible pour un poste de technicien <span class="hl">mécanique</span></h2>
+        <p class="lead">Fabrication ou assemblage d'équipements électromécaniques et mécaniques, à Genève.</p>
+        
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><footer class="mono"><span>Tom Foëx · Technicien en microtechnique</span><span>Mis à jour en octobre 2026</span></footer></div>
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- fondus à l'apparition ---------- */
+  var rv = document.querySelectorAll(".rv, .lang");
+  if ("IntersectionObserver" in window && !reduce) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+    rv.forEach(function (n) { io.observe(n); });
+  } else { rv.forEach(function (n) { n.classList.add("in"); }); }
+
+  /* ---------- compteurs ---------- */
+  var counters = document.querySelectorAll("[data-count]");
+  function runCount(el) {
+    var to = +el.getAttribute("data-count"), t0 = null;
+    if (reduce) { el.textContent = to; return; }
+    el.textContent = 0;
+    (function step(t) {
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / 1400), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(to * e);
+      if (p < 1) requestAnimationFrame(step);
+    })(performance.now());
+  }
+  if ("IntersectionObserver" in window) {
+    var co = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { runCount(e.target); co.unobserve(e.target); } });
+    }, { threshold: 0.6 });
+    counters.forEach(function (c) { co.observe(c); });
+  }
+
+  /* ---------- verbes qui défilent ---------- */
+  var verbs = document.querySelectorAll(".v"), vi = 0;
+  if (!reduce && verbs.length > 1) {
+    setInterval(function () {
+      var cur = verbs[vi]; cur.classList.remove("on"); cur.classList.add("out");
+      vi = (vi + 1) % verbs.length;
+      var nx = verbs[vi]; nx.classList.remove("out"); nx.classList.add("on");
+      setTimeout(function () { cur.classList.remove("out"); }, 700);
+    }, 2200);
+  }
+
+  /* ---------- bande défilante : on double le contenu ---------- */
+  var track = $("track");
+  track.innerHTML += track.innerHTML;
+
+  /* ---------- progression, navigation, ligne du parcours, halo ---------- */
+  var progress = $("progress"), glow = $("glow"), tls = [].slice.call(document.querySelectorAll(".timeline"));
+  var links = [].slice.call(document.querySelectorAll(".nav a")).filter(function (a) { return a.getAttribute("href") !== "#haut"; });
+  var secs = links.map(function (a) { return document.querySelector(a.getAttribute("href")); });
+  function onScroll() {
+    var h = document.documentElement.scrollHeight - innerHeight;
+    progress.style.transform = "scaleX(" + (h > 0 ? scrollY / h : 0) + ")";
+    tls.forEach(function (tl) {
+      var r = tl.getBoundingClientRect(), p = (innerHeight * 0.6 - r.top) / r.height;
+      tl.querySelector(".fill").style.height = Math.max(0, Math.min(1, p)) * (r.height - 12) + "px";
+    });
+    var cur = -1;
+    secs.forEach(function (s, i) { if (s && s.getBoundingClientRect().top < innerHeight * 0.4) cur = i; });
+    links.forEach(function (a, i) { a.classList.toggle("on", i === cur); });
+  }
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll);
+  onScroll();
+  addEventListener("pointermove", function (e) {
+    if (e.pointerType === "touch") return;
+    glow.style.opacity = 1;
+    glow.style.transform = "translate(" + e.clientX + "px," + e.clientY + "px)";
+  }, { passive: true });
+  document.querySelectorAll(".card").forEach(function (c) {
+    c.addEventListener("pointermove", function (e) {
+      var r = c.getBoundingClientRect();
+      c.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      c.style.setProperty("--my", (e.clientY - r.top) + "px");
+    });
+  });
+
+  /* ---------- portrait en points ---------- */
+  var P = [694,2,713,1,725,0,734,0,754,0,766,3,794,0,810,0,830,1,690,4,694,3,713,5,725,5,742,5,750,5,794,4,806,4,810,5,831,6,650,8,662,9,713,8,750,9,761,7,770,9,786,8,814,8,847,7,851,9,646,10,661,11,665,11,685,13,754,12,786,10,809,10,826,10,835,10,847,12,863,10,878,10,657,14,677,13,693,14,702,13,762,13,810,15,875,14,886,13,595,18,669,17,681,18,726,19,742,19,763,17,794,19,802,19,822,16,870,19,895,16,910,18,591,21,617,20,638,20,642,22,661,21,694,21,706,21,718,22,738,22,751,21,767,20,774,20,802,22,830,21,842,21,870,21,907,22,578,24,594,23,650,25,666,25,678,24,694,25,697,24,710,23,738,24,750,24,758,26,798,23,822,24,862,25,882,23,894,24,911,24,911,25,579,27,586,29,594,27,606,26,618,27,638,27,646,27,658,26,698,29,718,27,730,27,742,29,754,28,762,27,770,26,786,26,806,28,826,27,838,27,858,29,862,29,878,26,890,27,907,26,911,27,567,30,586,30,614,32,623,32,638,31,654,32,666,31,674,30,730,31,734,29,750,29,779,31,791,29,830,31,842,30,851,31,871,32,879,30,895,31,899,29,923,30,555,32,574,34,599,33,607,35,631,35,635,35,659,33,687,32,706,32,730,34,742,34,746,34,762,32,774,35,794,35,806,34,826,33,851,33,863,32,879,35,891,34,903,35,923,34,559,38,574,37,595,35,607,37,623,38,651,36,659,36,671,38,683,38,707,36,722,35,734,37,762,37,774,36,786,38,803,37,826,36,839,38,859,35,871,38,879,35,899,38,911,36,915,37,934,38,551,40,555,41,578,40,579,39,599,39,611,40,619,40,635,40,667,40,671,41,687,38,703,40,715,41,719,39,743,39,755,40,771,39,775,39,787,41,799,39,819,41,827,39,835,39,851,41,871,42,879,39,895,39,903,40,915,38,931,41,950,39,551,44,555,43,578,42,591,42,603,44,607,42,639,44,647,45,659,44,671,42,695,44,695,42,719,45,723,43,743,42,755,44,767,43,775,44,787,44,799,42,815,45,835,42,835,43,855,42,867,44,883,44,895,43,903,44,915,42,935,43,943,45,543,47,566,45,623,45,643,47,667,46,679,48,691,47,699,45,711,47,723,45,743,45,747,47,759,45,779,47,787,47,799,46,815,47,827,48,839,45,851,45,867,47,883,46,887,47,911,45,915,46,927,46,939,46,531,48,566,51,590,50,595,51,611,51,631,49,647,48,667,51,675,50,691,48,703,50,711,50,727,49,731,50,747,50,763,49,771,48,783,49,799,50,819,50,823,50,847,48,859,50,863,51,887,51,895,51,903,50,923,49,927,50,939,49,955,48,531,54,550,52,570,53,590,53,603,52,623,54,643,53,651,53,667,51,671,53,703,52,707,52,727,53,735,52,747,51,759,52,779,53,791,53,807,52,811,53,831,52,835,53,851,53,871,54,883,51,891,52,907,51,923,52,931,53,947,52,955,51,539,57,550,57,562,56,566,55,583,57,603,57,611,56,623,55,643,55,643,55,667,57,671,57,683,57,703,57,715,57,731,56,739,55,755,55,759,54,783,56,783,55,803,57,811,56,831,57,859,57,863,55,875,57,895,57,903,55,923,55,931,54,943,57,955,57,535,58,546,60,561,59,578,58,583,58,603,61,610,59,619,59,639,58,659,60,671,60,691,60,703,59,711,60,731,58,735,60,751,60,763,59,779,60,787,58,807,60,815,60,823,59,839,58,855,60,863,58,879,58,887,61,899,61,915,61,935,59,947,58,955,58,535,62,573,62,590,62,603,62,614,64,627,64,639,62,651,61,667,63,671,62,691,62,707,61,715,62,731,61,735,63,751,61,767,63,779,63,791,64,807,62,811,64,823,62,835,62,855,62,863,63,879,62,891,61,907,63,919,63,935,62,947,63,955,63,539,65,557,65,566,64,583,65,599,65,615,65,631,67,655,64,663,64,679,66,683,64,703,65,719,67,731,66,743,67,755,65,763,66,783,66,787,64,799,65,815,66,835,64,839,66,859,65,871,64,883,64,895,67,911,66,923,64,931,65,954,66,545,69,590,68,594,69,627,68,635,69,655,67,667,69,671,67,695,69,703,70,715,69,727,69,743,69,747,68,767,70,775,70,791,68,803,68,819,70,831,67,847,69,855,67,867,70,879,69,895,68,899,67,915,70,935,68,947,68,515,73,574,73,590,71,603,70,627,71,639,71,651,71,663,72,671,73,691,72,699,73,727,71,747,73,751,72,779,71,795,72,803,73,815,70,827,72,847,71,859,73,863,73,883,73,887,72,903,73,915,72,931,71,947,73,499,76,511,76,523,75,530,74,549,75,570,74,590,75,598,76,610,75,618,74,690,75,718,77,718,74,735,74,755,75,771,76,787,77,803,76,827,75,847,77,847,74,871,76,875,76,895,77,899,76,919,75,935,74,939,74,491,77,502,79,515,80,539,80,558,77,606,79,626,77,630,79,642,80,662,77,678,78,685,78,717,77,750,78,759,78,814,80,829,78,858,78,858,79,874,78,907,77,923,79,927,77,943,78,958,79,495,81,511,81,538,81,566,83,590,81,602,81,609,82,621,81,649,83,729,83,738,82,747,83,759,80,782,80,790,81,802,82,845,82,850,82,862,80,874,82,906,82,923,83,931,83,942,83,955,81,967,83,987,83,491,85,515,84,522,84,526,85,554,86,649,84,725,85,751,85,767,86,775,85,786,84,797,85,809,83,893,85,906,85,914,84,931,85,942,86,959,85,975,84,979,83,507,87,518,89,529,89,542,87,562,88,587,89,603,88,615,89,627,86,639,88,651,88,667,88,675,88,687,88,698,87,739,87,747,88,759,89,783,89,802,89,810,88,835,89,846,88,854,88,866,88,898,88,919,88,935,88,947,90,955,89,967,90,503,92,566,91,587,90,599,92,619,92,623,92,639,90,655,91,659,91,671,92,695,91,694,90,707,90,726,92,743,90,755,91,763,90,771,92,786,91,798,92,822,91,827,90,847,91,859,91,871,91,875,91,891,91,907,92,915,91,939,91,939,91,955,90,975,91,977,91,503,95,515,95,531,95,547,95,570,95,591,93,607,94,627,94,646,94,658,96,674,95,690,94,703,94,707,93,743,93,751,94,759,94,771,95,787,96,807,96,811,93,830,94,842,95,858,94,862,93,895,93,903,93,915,93,931,93,959,94,970,94,984,95,515,99,527,97,551,97,586,97,602,97,615,97,639,99,647,96,663,98,671,98,691,99,703,99,714,97,722,97,735,96,755,97,763,97,775,97,787,98,807,98,811,98,827,98,835,97,851,96,863,98,875,97,891,97,899,99,911,98,938,98,951,98,527,101,539,101,543,100,562,102,566,101,615,102,623,100,635,100,647,102,655,101,679,101,695,101,695,100,706,101,726,102,735,101,755,99,771,102,775,101,791,100,807,102,811,100,831,100,835,100,859,102,875,102,883,99,895,100,911,101,915,100,938,101,950,101,523,104,535,104,543,105,554,105,566,104,587,104,599,103,611,103,619,104,639,105,643,106,659,105,671,105,691,103,695,103,707,104,722,105,743,104,751,105,759,105,779,105,787,104,807,105,819,103,831,103,843,103,855,105,863,102,883,103,891,105,899,105,919,105,923,103,943,105,519,108,531,107,551,107,566,107,591,107,595,107,611,107,619,107,631,107,643,106,659,106,671,107,695,109,703,108,739,107,755,108,767,107,779,107,787,107,799,107,823,107,827,106,835,106,855,107,863,106,879,107,895,109,911,107,915,107,931,108,947,106,538,110,539,109,563,109,566,111,595,111,619,111,635,109,651,112,667,109,679,111,691,110,699,109,711,110,723,110,743,111,747,111,763,109,771,111,795,110,803,111,819,110,827,111,843,110,859,110,867,112,875,110,895,110,903,111,911,109,931,111,949,110,542,114,555,112,571,115,586,113,606,115,626,112,634,115,650,113,675,113,683,113,693,114,730,113,735,115,747,114,763,113,783,113,791,113,807,113,830,115,847,115,847,112,859,115,883,112,895,112,911,114,923,112,933,114,558,116,567,115,602,116,606,117,626,116,635,116,651,118,659,118,679,116,683,115,697,117,717,117,738,117,799,117,826,117,846,115,859,116,867,116,875,118,899,115,903,117,915,118,932,118,575,122,586,121,598,120,610,121,627,120,638,119,666,120,671,119,698,120,721,121,783,120,807,119,811,119,831,120,835,120,867,120,883,119,891,120,903,119,567,123,582,124,594,122,627,124,633,124,654,123,678,123,690,124,698,123,729,124,742,123,753,123,762,124,770,123,791,124,803,124,815,123,831,124,835,124,859,124,862,122,875,122,895,122,907,123,917,123,579,127,594,126,619,126,622,126,670,126,723,125,739,126,750,126,782,127,786,127,803,126,819,126,855,128,870,125,883,125,887,127,909,127,571,130,582,129,614,129,619,131,651,129,681,130,701,129,713,129,741,129,766,131,770,129,802,128,841,128,871,131,879,129,895,130,571,134,586,131,594,134,631,131,643,132,651,131,663,132,671,134,683,133,702,134,710,131,722,133,738,132,754,132,770,132,798,132,826,133,839,132,855,132,867,132,875,134,899,131,571,137,586,135,606,134,622,135,631,136,651,137,655,135,683,135,691,137,703,136,731,136,735,135,755,135,759,135,775,138,795,136,807,137,819,135,835,137,843,136,859,137,863,137,883,137,575,139,630,139,655,140,667,138,675,138,695,140,698,140,730,140,734,140,767,140,771,139,787,140,803,139,811,139,831,139,839,140,855,140,871,138,875,138,571,144,590,142,602,142,626,141,630,141,667,142,671,143,698,144,718,143,742,142,754,142,767,144,775,144,795,143,803,143,819,143,826,141,867,143,879,143,571,146,586,145,634,147,651,145,663,147,675,144,691,145,695,145,711,145,751,147,763,145,775,145,795,145,807,145,819,146,822,146,843,146,851,145,575,148,602,149,614,148,618,149,647,150,659,149,675,149,687,150,699,148,711,148,727,149,743,148,747,149,771,149,775,149,795,150,799,149,815,150,847,149,851,149,575,153,583,151,598,154,625,151,642,152,658,151,675,153,691,151,703,151,715,151,723,153,739,150,747,152,759,152,779,152,791,151,839,154,855,151,571,155,583,155,602,155,605,156,617,155,703,154,707,156,727,154,735,156,751,154,763,156,775,154,787,156,810,157,830,154,843,155,851,154,575,158,591,157,595,159,602,159,653,159,657,159,690,157,706,158,715,157,727,159,743,158,755,157,763,159,790,159,822,159,827,160,839,159,855,159,569,163,587,163,603,161,603,162,630,162,638,161,717,162,781,162,802,160,811,163,827,160,839,161,858,162,587,164,603,166,607,164,627,165,634,165,740,166,781,165,799,164,811,165,831,166,847,166,861,165,595,169,611,168,631,167,638,168,666,169,682,167,710,169,737,169,775,167,791,167,807,168,819,168,827,167,835,168,849,168,615,170,619,172,654,170,690,171,706,170,738,171,746,170,759,173,779,170,787,171,799,170,815,171,827,170,838,171,610,173,623,174,642,174,678,176,706,174,710,176,718,174,754,173,763,173,775,173,799,173,815,173,831,175,841,175,870,176,629,177,635,179,655,178,666,177,682,179,698,177,722,177,754,177,767,178,775,176,799,178,819,176,823,178,639,182,655,180,667,181,678,180,686,181,714,181,726,182,738,181,758,182,775,181,787,181,807,180,815,181,823,180,861,180,873,181,647,182,667,183,666,183,698,183,718,182,730,186,734,184,750,184,759,183,771,184,787,185,799,184,823,184,893,185,933,185,659,186,679,188,710,188,726,186,738,186,775,186,791,187,803,188,810,187,950,189,289,191,320,192,683,189,691,192,719,191,727,191,735,189,747,191,763,190,783,189,787,189,893,191,965,190,677,194,686,195,707,193,711,192,719,195,735,192,747,193,767,195,893,195,965,193,990,195,1005,193,249,198,684,198,707,197,715,196,731,197,735,196,751,197,757,196,877,198,973,197,973,198,1005,197,308,199,710,199,897,201,925,200,1041,200,1069,200,284,202,336,204,612,204,877,204,889,204,1029,203,1061,204,1086,203,625,205,702,207,714,207,933,205,960,207,1021,205,1049,208,1057,206,1118,207,1129,206,373,211,701,211,715,209,721,208,909,209,921,210,972,210,1037,209,1069,208,1129,209,1166,209,301,213,861,212,881,213,925,212,1001,214,1033,211,1073,213,1097,213,1125,211,1133,212,1149,214,1157,213,265,216,377,215,445,217,452,215,576,217,692,216,937,216,993,215,1061,216,1081,217,1158,216,1183,215,345,220,869,220,873,220,953,220,989,219,1049,218,1069,219,1085,220,1097,219,1121,218,1190,218,1201,219,192,221,369,222,436,222,865,221,889,222,917,223,925,223,993,223,1097,221,1153,221,1190,222,1203,223,184,224,201,224,209,225,433,225,473,225,624,226,849,226,901,224,1025,227,1089,225,1117,227,1141,226,1161,226,1190,224,1205,226,317,230,333,230,337,227,390,229,409,230,413,227,489,230,564,229,654,229,861,229,893,229,917,228,957,228,1021,227,1049,228,1057,229,1081,228,1141,228,1194,227,1218,228,276,233,333,231,413,231,425,231,477,231,508,231,564,233,681,232,701,232,725,232,857,232,873,232,909,231,981,231,1029,233,1165,233,1202,231,1214,233,273,235,329,234,418,235,433,235,449,234,485,235,612,236,661,234,689,235,814,236,945,236,1005,235,1101,235,1121,235,1198,235,1214,235,212,239,289,238,317,238,357,239,449,239,509,238,645,239,761,240,801,239,814,238,865,240,905,238,941,239,965,238,1053,237,1069,239,1101,238,1113,239,1125,239,1129,240,1161,239,1214,240,1227,239,265,242,349,241,442,242,506,243,569,241,761,240,801,243,814,243,853,242,889,241,1073,243,1113,241,1137,242,1153,241,1222,240,1238,242,249,245,438,245,501,245,525,245,549,245,714,244,806,243,818,246,853,244,973,243,1037,245,1072,244,1093,245,1222,244,1235,246,197,248,217,249,281,249,286,247,301,249,357,247,361,248,373,247,474,249,526,248,537,249,549,247,677,247,694,248,719,247,745,249,806,248,881,249,921,247,1013,248,1080,247,1173,249,1204,248,1230,249,117,253,248,250,281,252,306,251,369,251,458,253,462,251,477,251,501,251,693,250,802,251,853,251,949,252,1013,252,1088,252,1093,252,1149,252,1173,253,1205,252,1230,252,1242,253,377,255,453,255,493,254,533,256,541,253,557,254,681,254,705,256,725,254,745,254,857,255,861,254,877,255,937,253,1025,255,1049,254,1129,255,1217,253,1234,254,1257,255,305,256,469,257,477,257,493,258,541,259,633,256,701,259,733,258,1041,259,1153,256,1229,257,1262,258,477,261,513,261,513,259,557,259,705,260,725,262,784,259,869,261,929,261,945,262,989,262,1013,260,1105,260,1221,262,1259,262,289,264,305,264,321,263,589,262,629,264,681,265,697,265,729,265,801,266,849,264,877,264,889,265,925,264,1021,265,1093,264,1241,264,289,266,505,268,537,267,664,268,705,267,709,267,728,268,748,266,897,266,921,267,1021,266,1101,267,1217,268,1258,267,388,271,501,271,501,270,525,270,542,270,569,270,581,270,613,271,632,272,697,271,816,272,865,269,1009,269,1017,271,1105,269,1121,272,1144,271,1168,271,1201,270,1241,270,1250,271,521,272,533,273,577,274,681,273,697,273,820,274,865,273,1017,275,1161,272,1177,274,1197,273,1209,275,265,277,337,277,505,278,521,276,549,276,577,275,649,277,660,277,705,275,794,278,865,277,885,278,945,278,980,277,1017,277,1025,276,1109,278,1122,277,1225,276,133,280,304,281,353,281,533,281,557,279,629,281,685,281,705,281,741,281,789,281,817,281,905,279,929,279,1060,279,1126,281,1130,280,1209,282,1225,279,1237,281,1265,280,1279,280,137,282,248,282,569,284,605,284,629,284,672,282,804,284,905,284,924,284,1270,282,1274,282,133,288,245,286,270,288,294,285,314,286,342,286,373,285,657,285,718,286,721,285,849,288,865,285,969,286,1040,288,1121,286,1270,286,221,290,377,289,512,289,600,290,625,290,633,288,661,289,725,289,972,289,1270,288,221,293,313,293,329,293,344,292,373,292,545,293,557,292,637,294,645,292,726,292,782,292,857,292,869,292,885,292,905,292,1097,293,1124,293,1209,294,1225,293,1278,291,138,295,257,296,265,296,585,296,594,297,685,298,722,297,873,295,893,295,985,297,1097,294,1110,295,1274,295,1295,297,1305,297,290,299,389,300,577,298,692,301,717,300,722,300,777,298,980,300,1291,301,325,302,341,301,398,303,585,301,646,301,669,301,733,302,809,301,861,301,928,302,992,303,1009,304,1299,301,309,306,321,306,366,306,605,305,709,304,729,304,738,306,744,306,777,305,809,306,853,305,965,307,1093,305,1265,306,1282,306,285,308,305,308,697,307,734,309,753,308,804,309,1016,309,1084,309,1101,307,143,312,325,311,640,313,729,312,737,311,753,312,869,311,881,313,1141,310,1205,313,1238,312,1254,312,1306,311,155,315,690,316,701,315,869,316,873,317,1089,315,1162,314,1178,316,1182,316,1226,314,1257,316,1298,316,359,320,367,317,378,317,409,317,777,320,897,320,1049,318,1306,319,1315,318,1326,320,285,323,335,321,351,322,363,322,383,322,387,323,407,322,423,320,435,321,748,322,758,322,780,322,809,321,1221,321,1301,323,1314,321,1327,322,281,326,351,325,371,325,387,324,395,325,407,326,419,325,427,326,439,326,694,324,725,324,758,326,949,324,1057,324,1149,325,1301,326,1310,323,1322,326,269,329,306,329,319,327,331,327,343,327,351,328,375,327,383,328,399,329,399,327,415,328,431,329,447,328,463,329,463,329,478,329,710,327,740,327,765,328,877,329,889,328,912,329,961,329,1181,330,1233,328,1285,329,1297,328,1330,328,311,330,319,330,327,333,347,332,355,331,371,331,375,331,391,331,407,332,423,331,427,331,439,332,459,331,475,332,487,331,706,333,729,331,748,332,757,331,1060,330,1225,331,1245,332,1301,331,1322,330,273,335,319,336,327,335,347,333,351,334,367,333,383,333,403,334,419,336,431,335,443,334,459,334,467,335,483,335,499,335,714,333,893,335,921,334,1088,335,1132,334,1205,335,1245,333,1273,334,1301,335,1326,333,1335,333,177,339,315,337,335,338,339,338,355,338,367,336,375,338,395,336,423,337,431,338,443,339,455,338,475,337,479,336,491,337,511,338,865,338,1092,338,1185,338,1193,338,1237,337,1301,339,1313,338,1329,337,265,341,297,341,323,341,335,341,343,342,359,342,367,342,383,341,399,341,403,341,435,340,443,341,451,342,467,340,487,340,491,341,511,342,769,342,825,341,881,341,1201,341,1213,340,1269,341,1309,340,1334,342,1350,340,179,342,323,344,339,343,355,344,363,344,383,345,387,344,403,345,415,343,439,344,443,344,455,344,463,343,479,344,499,345,511,343,527,344,741,343,821,343,829,345,861,344,1181,344,1217,343,1237,346,1317,345,1325,345,170,346,256,348,346,348,351,346,363,346,379,346,391,346,407,346,411,347,431,346,451,348,463,347,471,348,479,347,503,347,507,348,523,348,531,348,734,347,757,347,861,347,877,347,1205,346,1257,348,1293,346,1325,348,1338,347,1354,348,1362,348,313,352,349,350,367,350,383,349,395,349,399,350,419,351,427,349,451,351,455,349,475,350,479,351,495,352,503,349,523,349,531,350,550,350,1245,350,1285,352,1337,351,1367,351,185,354,363,355,383,354,395,352,403,353,423,354,435,353,447,354,462,354,470,354,479,355,503,354,507,354,527,354,531,352,547,353,559,355,757,355,994,355,1006,353,1015,354,1027,354,1047,353,1063,353,1067,353,1113,355,1237,353,1249,354,1321,354,1350,353,1370,355,1377,353,189,357,305,355,321,357,370,356,379,356,391,356,403,357,423,356,439,358,447,357,455,357,475,358,491,356,511,355,519,355,539,356,551,357,559,358,757,355,813,356,868,356,982,356,995,358,1011,356,1019,358,1031,357,1043,358,1059,357,1079,356,1083,357,1091,357,1115,358,1325,356,1357,356,1370,358,280,361,422,361,431,361,443,360,451,359,475,362,483,359,491,360,519,361,527,361,555,359,559,360,570,361,917,362,925,359,937,360,963,360,963,360,983,359,995,359,1011,360,1023,359,1027,360,1043,359,1055,361,1071,360,1087,361,1099,359,1107,360,1127,359,1135,361,1321,361,1337,359,439,362,455,364,467,363,487,362,495,362,515,364,527,365,539,363,551,364,555,364,571,364,837,362,870,362,886,362,905,362,933,363,962,364,971,362,979,362,999,363,1011,362,1015,362,1031,365,1051,364,1059,362,1079,363,1079,362,1095,362,1103,364,1119,362,1139,364,1154,364,1202,364,1220,364,1233,362,1337,364,1358,363,1382,363,353,367,369,365,457,367,475,367,487,367,491,366,503,366,523,367,539,367,547,365,555,365,567,367,761,366,825,367,841,367,869,367,889,366,962,365,979,368,999,366,1003,368,1019,367,1039,366,1051,366,1059,366,1075,366,1083,365,1099,367,1107,366,1127,367,1131,365,1143,366,1281,367,1305,366,1321,365,1353,367,1362,366,1379,366,1385,367,301,371,341,369,409,368,581,371,622,371,630,369,646,369,654,369,670,370,706,371,706,368,746,370,770,370,829,369,838,371,865,368,873,369,897,371,974,368,999,369,1011,371,1027,370,1031,370,1043,369,1055,369,1067,370,1083,369,1091,368,1111,368,1127,370,1135,369,1143,369,1159,369,1173,369,1257,370,1274,368,1293,370,1321,371,1341,371,1370,371,194,371,297,374,389,373,462,373,597,373,622,372,658,372,694,373,722,372,741,372,773,373,821,372,841,374,865,372,913,374,995,374,1003,371,1015,373,1035,372,1051,373,1063,374,1079,374,1083,373,1091,372,1107,372,1131,374,1139,371,1143,372,1167,373,1221,374,1261,374,1269,372,1289,373,1318,374,1321,374,1350,373,1366,372,1379,373,198,375,345,376,353,377,361,376,377,378,389,375,525,376,549,375,553,376,653,375,733,378,833,377,837,375,865,374,897,376,925,375,937,376,957,377,969,376,999,377,1011,377,1027,375,1031,376,1043,376,1055,377,1071,375,1083,377,1095,375,1111,376,1119,377,1131,377,1155,375,1159,376,1175,377,1318,375,1350,375,1378,376,1399,376,373,378,429,380,462,381,465,379,485,380,549,378,605,379,621,380,645,379,685,379,709,379,721,379,777,379,789,380,833,379,877,380,917,379,933,380,998,379,1003,380,1023,378,1035,378,1051,380,1059,380,1075,380,1087,380,1103,380,1107,378,1119,381,1139,379,1151,379,1163,378,1171,379,1317,379,1358,378,1395,380,312,383,433,381,465,381,485,383,521,382,537,383,585,384,645,381,653,383,717,382,733,382,745,383,913,382,929,381,945,384,957,382,965,383,1011,383,1023,384,1035,382,1047,383,1059,383,1075,382,1087,382,1095,382,1115,381,1123,383,1135,381,1147,383,1163,383,1179,381,1350,382,1362,384,1378,381,316,385,441,384,453,387,469,386,485,385,513,385,513,385,529,387,577,387,605,386,669,385,689,384,729,386,745,387,781,385,789,384,821,386,853,384,873,386,1027,387,1039,385,1043,386,1063,387,1071,384,1083,387,1099,386,1111,385,1127,386,1131,386,1147,384,1225,386,1245,387,1313,386,1368,385,1387,385,225,387,398,387,485,389,493,390,509,389,549,388,581,390,601,388,625,389,665,389,693,390,717,389,781,389,781,388,873,389,969,389,985,390,1001,390,1023,390,1031,389,1043,390,1063,389,1071,390,1091,389,1091,389,1115,388,1123,387,1135,388,1151,388,1189,390,1298,389,1318,390,1341,388,1409,390,390,392,497,393,629,391,669,394,689,392,729,393,741,391,805,392,813,391,861,393,893,391,905,391,917,393,933,391,937,390,977,391,1023,391,1027,392,1043,394,1057,393,1097,393,1148,392,1241,392,1246,390,1277,393,1317,393,1322,392,1397,390,392,394,449,395,464,396,569,396,581,396,661,397,817,395,865,394,973,396,1015,396,1169,395,1278,396,1329,396,1377,396,1401,396,237,400,585,400,593,397,661,399,681,397,737,397,853,398,936,398,1122,399,1142,397,1201,398,1270,399,1297,398,1313,398,1366,400,1413,398,356,400,464,400,516,403,572,402,588,403,660,402,685,401,741,402,797,401,841,400,877,403,921,403,929,402,1261,401,1286,402,1325,403,1369,400,1393,401,1405,402,441,404,453,405,632,404,873,406,901,405,1265,404,1333,406,1389,404,1402,406,373,409,456,407,701,407,776,406,1036,407,1065,408,1081,408,1121,409,1201,409,1205,409,1277,407,1394,407,1399,407,374,413,413,412,429,411,457,413,697,413,1053,411,1077,412,1101,410,1373,410,1394,411,1403,411,493,414,1137,415,1145,413,1229,413,1333,414,1361,414,1394,413,1399,415,441,416,476,417,604,417,877,416,1057,418,1140,419,1140,417,1233,417,1253,418,1349,417,1403,417,417,421,1020,422,1028,422,1081,422,1261,421,1330,422,1369,422,1399,419,372,424,576,426,1097,423,1140,424,1342,425,1349,425,1369,424,1398,423,1399,425,1036,428,1354,428,1361,427,1374,426,1386,428,1402,426,989,431,1048,429,1395,431,766,433,773,432,940,434,1028,434,1178,434,1379,433,757,437,904,437,957,436,1004,435,1194,438,1218,436,1237,437,1225,441,1254,441,1278,441,1285,438,844,442,1361,444,170,445,673,446,688,447,965,446,981,445,1285,445,674,450,683,450,177,454,793,460,159,470];
+  var IW = 182, IH = 234;
+  var cv = $("portrait"), cx2 = cv.getContext("2d");
+  var parts = [], scale = 1, dpr = Math.min(2, window.devicePixelRatio || 1);
+  var ptr = { x: -999, y: -999, on: false };
+  $("cap").textContent = "Portrait en " + (P.length / 2).toLocaleString("fr-CH").replace(/ /g, " ") + " points · bouge le curseur";
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function ramp(t) {            // ambre -> corail -> violet
+    var s = [[240, 240, 234], [185, 193, 138], [138, 141, 132]], k = t < 0.5 ? 0 : 1, u = t < 0.5 ? t * 2 : (t - 0.5) * 2;
+    return [lerp(s[k][0], s[k + 1][0], u), lerp(s[k][1], s[k + 1][1], u), lerp(s[k][2], s[k + 1][2], u)];
+  }
+  function build() {
+    var w = cv.clientWidth; if (!w) return;
+    scale = w / IW;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(w * IH / IW * dpr);
+    cx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var old = parts.length === P.length / 2;
+    for (var i = 0; i < P.length; i += 2) {
+      var n = i / 2, v = P[i], lvl = v & 3, hx = (v >> 2) / 2 * scale, hy = P[i + 1] / 2 * scale;
+      var c = ramp(Math.min(1, Math.max(0, (hy / scale) / IH)));
+      var pt = old ? parts[n] : { x: 0, y: 0, vx: 0, vy: 0, d: 0 };
+      if (!old) {
+        var ang = Math.random() * 6.283, rad = (0.6 + Math.random() * 1.1) * w;
+        pt.x = w / 2 + Math.cos(ang) * rad; pt.y = w * IH / IW / 2 + Math.sin(ang) * rad;
+        pt.d = Math.random() * 0.9;
+        parts.push(pt);
+      }
+      pt.hx = hx; pt.hy = hy; pt.r = (0.55 + lvl * 0.28) * scale * 0.62 + 0.25;
+      pt.c = "rgb(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + ")"; pt.l = lvl;
+      pt.ph = Math.random() * 6.283;
+    }
+  }
+  function drawStatic() {
+    cx2.clearRect(0, 0, cv.clientWidth, cv.clientHeight);
+    parts.forEach(function (p) { cx2.fillStyle = p.c; cx2.beginPath(); cx2.arc(p.hx, p.hy, p.r, 0, 6.283); cx2.fill(); });
+  }
+  function frame(now) {
+    var t = (now - t0) / 1000, R = 56 * scale / 2.4 + 28, R2 = R * R;
+    cx2.clearRect(0, 0, cv.clientWidth, cv.clientHeight);
+    var k = 0.01 + 0.05 * Math.min(1, Math.max(0, (t - 0.2) / 2.2));
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      var tt = Math.max(0, t - p.d * 0.9), kk = k * Math.min(1, tt * 1.6);
+      var tx = p.hx + Math.sin(t * 0.9 + p.ph) * 0.6, ty = p.hy + Math.cos(t * 0.8 + p.ph) * 0.6;
+      p.vx += (tx - p.x) * kk; p.vy += (ty - p.y) * kk;
+      var near = false;
+      if (ptr.on) {
+        var dx = p.x - ptr.x, dy = p.y - ptr.y, d2 = dx * dx + dy * dy;
+        if (d2 < R2) {
+          var d = Math.sqrt(d2) || 1, f = (1 - d / R); f *= f * 2.6;
+          p.vx += dx / d * f; p.vy += dy / d * f; near = true;
+        }
+      }
+      p.vx *= 0.86; p.vy *= 0.86; p.x += p.vx; p.y += p.vy;
+      cx2.fillStyle = near ? "#f2efe8" : p.c;
+      cx2.beginPath(); cx2.arc(p.x, p.y, near ? p.r * 1.25 : p.r, 0, 6.283); cx2.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  var t0 = performance.now();
+  build();
+  if ("ResizeObserver" in window) new ResizeObserver(function () { build(); if (reduce) drawStatic(); }).observe(cv);
+  if (reduce) { parts.forEach(function (p) { p.x = p.hx; p.y = p.hy; }); drawStatic(); }
+  else {
+    requestAnimationFrame(frame);
+    addEventListener("pointermove", function (e) {
+      var r = cv.getBoundingClientRect();
+      ptr.x = e.clientX - r.left; ptr.y = e.clientY - r.top;
+      ptr.on = ptr.x > -60 && ptr.y > -60 && ptr.x < r.width + 60 && ptr.y < r.height + 60;
+    }, { passive: true });
+    cv.addEventListener("pointerleave", function () { ptr.on = false; });
+    cv.addEventListener("pointerdown", function (e) {
+      var r = cv.getBoundingClientRect(), bx = e.clientX - r.left, by = e.clientY - r.top;
+      parts.forEach(function (p) {
+        var dx = p.x - bx, dy = p.y - by, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (d < 170 * scale / 2) { var f = (1 - d / (170 * scale / 2)) * 14; p.vx += dx / d * f; p.vy += dy / d * f; }
+      });
+    });
+  }
+
+  /* ---------- train d'engrenages ---------- */
+  (function () {
+    var NS = "http://www.w3.org/2000/svg", M = 6, A0 = 0, B0 = Math.PI / 3;
+    var gears = [
+      { n: 24, x: 0, y: 0, holes: 5, f: "url(#g0)" },
+      { n: 12, x: 108, y: 0, holes: 0, f: "url(#g1)" },
+      { n: 36, x: 108 + 144 * Math.cos(Math.PI / 3), y: 144 * Math.sin(Math.PI / 3), holes: 6, f: "url(#g2)" }
+    ];
+    function circle(cx, cy, r) { return "M" + (cx - r) + "," + cy + "a" + r + "," + r + " 0 1,0 " + (2 * r) + ",0a" + r + "," + r + " 0 1,0 " + (-2 * r) + ",0Z"; }
+    function path(g) {
+      var r = M * g.n / 2, ro = r + M * 0.9, rr = r - M * 1.15, s = Math.PI * 2 / g.n, pts = [];
+      for (var k = 0; k < g.n; k++) {
+        [[-0.3, rr], [-0.13, ro], [0.13, ro], [0.3, rr]].forEach(function (p) {
+          var a = k * s + p[0] * s;
+          pts.push((Math.cos(a) * p[1]).toFixed(2) + "," + (Math.sin(a) * p[1]).toFixed(2));
+        });
+      }
+      var d = "M" + pts.join("L") + "Z" + circle(0, 0, Math.max(4, r * 0.14));
+      for (var h = 0; h < g.holes; h++) { var ha = h / g.holes * Math.PI * 2, hr = r * 0.6; d += circle(Math.cos(ha) * hr, Math.sin(ha) * hr, r * 0.13); }
+      g.r = r; return d;
+    }
+    function el(name, attrs, parent) { var e = document.createElementNS(NS, name); for (var k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; }
+    var axes = $("axes"), pitches = $("pitches"), gl = $("gears");
+    gears.forEach(function (g) {
+      var d = path(g);
+      g.node = el("g", {}, gl);
+      el("path", { "class": "gb", d: d, fill: "rgba(255,255,255,0.05)", stroke: g.f }, g.node);
+      el("circle", { "class": "pitch", cx: g.x, cy: g.y, r: g.r }, pitches);
+      el("line", { "class": "axis", x1: g.x - g.r - 14, y1: g.y, x2: g.x + g.r + 14, y2: g.y }, axes);
+      el("line", { "class": "axis", x1: g.x, y1: g.y - g.r - 14, x2: g.x, y2: g.y + g.r + 14 }, axes);
+    });
+    function draw(pa) {
+      var A = gears[0], B = gears[1], C = gears[2];
+      var pb = A0 + Math.PI - Math.PI / B.n + (A0 - pa) * A.n / B.n;
+      var pc = B0 + Math.PI - Math.PI / C.n + (B0 - pb) * B.n / C.n;
+      [[A, pa], [B, pb], [C, pc]].forEach(function (q) {
+        q[0].node.setAttribute("transform", "translate(" + q[0].x.toFixed(2) + " " + q[0].y.toFixed(2) + ") rotate(" + (q[1] * 180 / Math.PI).toFixed(2) + ")");
+      });
+    }
+    draw(0.2);
+    if (!reduce) { var s0 = performance.now(); (function f(t) { draw(0.2 + (t - s0) / 1000 * 0.16); requestAnimationFrame(f); })(s0); }
+  })();
+
+  /* ---------- banc de test : deux axes qui balayent la surface ---------- */
+  (function () {
+    var trace = $("trace"), gantry = $("gantry"), car = $("carriage"), spot = $("spot");
+    var rows = 9, x0 = 104, x1 = 376, y0 = 96, y1 = 256, d = "M" + x0 + "," + y0;
+    for (var r = 0; r < rows; r++) {
+      var y = y0 + (y1 - y0) * r / (rows - 1);
+      d += "L" + (r % 2 === 0 ? x1 : x0) + "," + y;
+      if (r < rows - 1) d += "L" + (r % 2 === 0 ? x1 : x0) + "," + (y0 + (y1 - y0) * (r + 1) / (rows - 1));
+    }
+    trace.setAttribute("d", d);
+    var L = trace.getTotalLength(), rx = $("rx"), ry = $("ry"), rp = $("rp");
+    function at(p) {
+      var pt = trace.getPointAtLength(Math.max(0.01, p * L));
+      gantry.setAttribute("transform", "translate(0 " + pt.y.toFixed(2) + ")");
+      car.setAttribute("transform", "translate(" + pt.x.toFixed(2) + " 0)");
+      trace.setAttribute("stroke-dashoffset", (1 - p).toFixed(4));
+      rx.textContent = ((pt.x - 90) / 300 * 120).toFixed(2);
+      ry.textContent = ((pt.y - 70) / 200 * 80).toFixed(2);
+      rp.textContent = Math.round(p * 100);
+    }
+    if (reduce) { at(0.62); return; }
+    var s = performance.now(), T = 16000;
+    (function f(now) {
+      var p = ((now - s) % T) / T;
+      at(p < 0.94 ? p / 0.94 : 1);
+      spot.setAttribute("r", (7 + Math.sin(now / 260) * 2.2).toFixed(2));
+      requestAnimationFrame(f);
+    })(s);
+  })();
+})();
+</script>
+
+</body>
+</html>
