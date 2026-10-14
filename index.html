@@ -86,6 +86,7 @@ section { padding-block: clamp(3rem, 7vw, 5.5rem); scroll-margin-top: 4rem; }
 .verbs { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.4rem, 3.4vw, 2.1rem); line-height: 1.2; }
 .vwrap { display: inline-grid; vertical-align: bottom; }
 .v { grid-area: 1 / 1; color: var(--amber); opacity: 0; transform: translateY(0.6em); filter: blur(6px); transition: opacity 0.6s, transform 0.6s, filter 0.6s; }
+.pr { color: var(--fg); }
 .v.on { opacity: 1; transform: none; filter: none; }
 .v.out { opacity: 0; transform: translateY(-0.6em); filter: blur(6px); }
 .lead { color: #cfd0c9; font-size: 1.12rem; }
@@ -221,7 +222,7 @@ footer { position: relative; z-index: 1; display: flex; flex-wrap: wrap; justify
           <span class="line" aria-hidden="true"><span style="--i:0;--c:#f2efe8">T</span><span style="--i:1;--c:#f2efe8">o</span><span style="--i:2;--c:#f2efe8">m</span></span>
           <span class="line" aria-hidden="true"><span style="--i:3;--c:#a3ad74">F</span><span style="--i:4;--c:#a3ad74">o</span><span style="--i:5;--c:#a3ad74">ë</span><span style="--i:6;--c:#a3ad74">x</span></span>
         </h1>
-        <p class="verbs">Je <span class="vwrap"><span class="v on">fabrique</span><span class="v">assemble</span><span class="v">contrôle</span><span class="v">programme</span><span class="v">dépose sous vide</span><span class="v">usine</span></span></p>
+        <p class="verbs"><span class="vwrap"><span class="v on"><span class="pr">Je </span>fabrique</span><span class="v"><span class="pr">J'</span>assemble</span><span class="v"><span class="pr">Je </span>contrôle</span><span class="v"><span class="pr">Je </span>programme</span><span class="v"><span class="pr">Je </span>dépose sous vide</span><span class="v"><span class="pr">J'</span>usine</span></span></p>
         <p class="lead">Technicien en microtechnique et mécanique de précision : fabrication, assemblage et contrôle qualité. Usinage CNC et conventionnel, dépôt de couches minces sous ultra-vide. Je cherche un poste de technicien mécanique pour contribuer à la fabrication et à l'assemblage d'équipements électromécaniques et mécaniques.</p>
         <div class="cta">
           <a class="btn solid" href="#experience">Voir mon expérience</a>
