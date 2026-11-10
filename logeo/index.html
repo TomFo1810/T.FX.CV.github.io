@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Logéo</title>
+<meta name="description" content="Logements à louer dans le canton de Genève, mis à jour en continu, avec suivi des candidatures et dossier prêt à l'emploi.">
+<meta name="theme-color" content="#f4f6f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1519" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Logéo">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<!--CORPS-->
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#logements" aria-label="Logéo, logements">Log<span>é</span>o</a>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <a href="#logements" data-tab="logements"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5.5v-5h-5v5H4z"/></svg><span>Logements</span></a>
+      <a href="#suivi" data-tab="suivi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5zM8.5 12l2.5 2.5 4.5-5"/></svg><span>Candidatures</span><b class="pill" id="nSuivi" hidden></b></a>
+      <a href="#dossier" data-tab="dossier"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h7l4 4v12H7zM14 4v4h4M10 13h5M10 16.5h5"/></svg><span>Dossier</span></a>
+      <a href="#demarches" data-tab="demarches"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 20V9l6-4 6 4v11M10 20v-5h4v5"/></svg><span>Démarches</span></a>
+      <a href="#sources" data-tab="sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM12 11v5M12 8v.5"/></svg><span>Sources</span></a>
+    </nav>
+    <button type="button" class="etat" id="etat" data-k="attente" title="Actualiser maintenant"><i></i><span id="etatTxt">Chargement</span></button>
+  </div>
+</header>
+
+<main class="wrap" id="vue" tabindex="-1">
+  <p class="vide">Chargement des annonces…</p>
+</main>
+
+<footer class="wrap pied">
+  <span>Logéo, logements à louer dans le canton de Genève.</span>
+  <span>Les annonces appartiennent à leurs sites d'origine : vérifiez toujours prix et disponibilité sur l'annonce.</span>
+</footer>
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p class="wrap vide">Logéo a besoin de JavaScript pour afficher les annonces.</p></noscript>
+<script src="contenu.js"></script>
+<script src="app.js"></script>
+<!--/CORPS-->
+</body>
+</html>
