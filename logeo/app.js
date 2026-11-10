@@ -11,7 +11,7 @@
   var PAGE = 40;
   var CLE = "logeo-v3";
 
-  var C = window.LOGEO_CONTENU;
+  var C = window.LOGEO_CONTENU, REGIES = window.LOGEO_REGIES || [];
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return [].slice.call((r || document).querySelectorAll(s)); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -47,7 +47,7 @@
   function defauts() {
     return {
       v: 3,
-      profil: { nom: "", contact: "", situation: "", emploi: "", personnes: "1", revenu: "", entree: "" },
+      profil: { nom: "", contact: "", naissance: "", nationalite: "", situation: "", adresse: "", bailleur: "", loyerActuel: "", emploi: "", employeur: "", depuis: "", personnes: "1", revenu: "", entree: "" },
       crit: { loyerMax: "", piecesMin: "", communes: "" },
       docs: {}, projets: [], suivis: [],
       filtres: { q: "", com: "", p: "tous", max: "", type: "", qui: "", tri: "recent", crit: false, neuf: false },
@@ -75,6 +75,12 @@
   function total(l) { return l.l == null ? null : l.l; }
   function particulier(l) { return l.src === "flatfox" && !l.ag; }
   function estNeuf(l) { return !!l.vu0 && Date.now() - temps(l.vu0) < NEUF_H * 3600000; }
+  function regieDe(nom) {
+    var n = norm(nom); if (!n) return null;
+    for (var i = 0; i < REGIES.length; i++) if (new RegExp(REGIES[i].motif).test(n)) return REGIES[i];
+    return null;
+  }
+  var GENRE = { papier: "PDF à imprimer et remplir à la main", ecran: "PDF à remplir à l'écran", pdf: "PDF", ligne: "Inscription en ligne", page: "Page de la régie" };
   function nomSource(l) { return (D.sources[l.src] && D.sources[l.src].nom) || l.src; }
 
   function recevoir(d) {
@@ -160,7 +166,7 @@
   }
   function suivi(id) { return S.suivis.some(function (x) { return x.ref === id; }); }
   function ligneBien(l) {
-    var t = total(l), rev = num(S.profil.revenu), u = lien(l.u), faits = [], marques = "";
+    var t = total(l), rev = num(S.profil.revenu), u = lien(l.u), faits = [], marques = "", rg = regieDe(l.ag);
     if (l.p != null) faits.push("<b>" + pieces(l.p) + "</b>");
     if (l.s) faits.push("<b>" + fp(l.s) + " m²</b>");
     faits.push(esc((l.npa ? l.npa + " " : "") + (l.loc && l.loc !== l.com ? l.loc + " (" + l.com + ")" : l.com)));
@@ -174,6 +180,7 @@
     if (rev > 0 && t != null) { var tx = t / rev * 100; marques += '<span class="badge ' + (tx <= 33.4 ? "ok" : "alerte") + '">Taux d\'effort ' + Math.round(tx) + " %</span>"; }
     var prix = t == null ? '<div class="prix nd">Loyer sur demande</div>' : '<div class="prix">' + chf(t) + "<small>par mois" + (l.ci ? ", charges comprises" : "") + "</small></div>";
     var orig = (particulier(l) ? "Particulier ou annonce directe" : esc(l.ag || "Annonceur non précisé")) + " · " + esc(nomSource(l)) +
+      (rg ? ' · <a href="' + esc(rg.docs[0].u) + '" target="_blank" rel="noopener noreferrer">formulaire de la régie</a>' : "") +
       (l.u2 ? ' · <a href="' + esc(lien(l.u2)) + '" target="_blank" rel="noopener noreferrer">aussi sur immobilier.ch</a>' : "");
     var on = suivi(l.id);
     return '<article class="bien">' + prix +
@@ -194,8 +201,10 @@
     var depuis = visitePrec ? TOUS.filter(function (l) { return temps(l.vu0) > visitePrec; }).length : 0;
     var neufs = TOUS.filter(estNeuf).length;
     var actifs = (F.q ? 1 : 0) + (F.com ? 1 : 0) + (F.p !== "tous" ? 1 : 0) + (F.max ? 1 : 0) + (F.type ? 1 : 0) + (F.qui ? 1 : 0) + (F.crit ? 1 : 0) + (F.neuf ? 1 : 0);
-    return '<div class="tete"><h1>Logements à louer dans le canton de Genève</h1><p>' + TOUS.length + " annonces relevées automatiquement, " + neufs + " apparues ces dernières 48 heures" +
-      (depuis ? ", dont " + depuis + " depuis votre dernière visite" : "") + ".</p></div>" +
+    return '<section class="hero"><h1>Se loger à Genève.<br><span>Sans y passer ses soirées.</span></h1>' +
+      '<p>Les annonces du canton réunies et relues en continu. Vos candidatures, votre dossier et les formulaires des régies au même endroit.</p>' +
+      '<div class="chiffres"><div><b>' + TOUS.length + '</b><span>logements à louer</span></div><div><b>' + neufs + '</b><span>nouveaux en 48 heures</span></div>' +
+      (depuis ? "<div><b>" + depuis + "</b><span>depuis votre dernière visite</span></div>" : '<div><b>' + REGIES.length + "</b><span>régies avec formulaire prêt</span></div>") + "</div></section>" +
       '<details class="carte filtres" id="filtres"' + (window.matchMedia("(min-width: 761px)").matches || actifs ? " open" : "") + "><summary>Filtres" + (actifs ? " (" + actifs + ")" : "") + '</summary><div class="f-corps">' +
       '<div class="f-grille">' +
       '<div class="champ"><label for="f_q">Recherche</label><input id="f_q" type="search" placeholder="Rue, quartier, régie, numéro postal" value="' + esc(F.q) + '"></div>' +
@@ -269,13 +278,14 @@
       var vs = l.statut === "visite" ? dateSaisie(l.visite) : null;
       if (vs != null) meta.push("Visite " + esc(jour(vs)));
       if (l.cree) meta.push("Ajoutée " + esc(jour(l.cree)));
-      var u = lien(l.lien);
+      var u = lien(l.lien), rgc = regieDe(l.regie);
       return '<article class="cand" data-id="' + esc(l.id) + '"><div><h3>' + esc(l.titre) + '</h3><div class="faits">' + meta.map(function (m) { return "<span>" + m + "</span>"; }).join("") + "</div></div>" +
         '<div class="prix">' + (l.loyer > 0 ? chf(l.loyer) : '<span class="note">Loyer sur demande</span>') + "</div>" +
         '<div class="bas">' + b + '<span class="pousse"></span>' +
         (l.statut === "visite" ? '<input type="date" data-act="visite" aria-label="Date de la visite" value="' + esc(l.visite || "") + '">' : "") +
         '<select data-act="statut" aria-label="Statut">' + C.STATUTS.map(function (s) { return '<option value="' + s.k + '"' + (s.k === l.statut ? " selected" : "") + ">" + s.t + "</option>"; }).join("") + "</select>" +
         '<button type="button" class="btn petit" data-act="lettre">Lettre</button>' +
+        (rgc ? '<a class="btn petit" href="' + esc(rgc.docs[0].u) + '" target="_blank" rel="noopener noreferrer">Formulaire ' + esc(rgc.nom.split(" ")[0]) + "</a>" : "") +
         (u ? '<a class="btn petit" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">Ouvrir</a>' : "") +
         '<button type="button" class="btn petit discret" data-act="retirer">Retirer</button></div></article>';
     }).join("");
@@ -294,7 +304,11 @@
       '<div class="deux"><div class="pile">' +
       '<section class="carte pad pile"><h2>Profil</h2><div class="grille">' +
       champ("p_", "data-profil", "nom", "Nom et prénom", p.nom) + champ("p_", "data-profil", "contact", "Téléphone ou e-mail", p.contact) +
-      champ("p_", "data-profil", "situation", "Situation", p.situation, "Ex. célibataire, en couple") + champ("p_", "data-profil", "emploi", "Emploi", p.emploi, "Ex. technicien en microtechnique") +
+      champ("p_", "data-profil", "naissance", "Date de naissance", p.naissance, "Ex. 14.03.2001") + champ("p_", "data-profil", "nationalite", "Nationalité ou permis", p.nationalite, "Ex. Suisse, permis B") +
+      champ("p_", "data-profil", "situation", "État civil", p.situation, "Ex. célibataire, en couple") + champ("p_", "data-profil", "adresse", "Adresse actuelle", p.adresse, "Rue, numéro postal, localité") +
+      champ("p_", "data-profil", "bailleur", "Régie ou bailleur actuel", p.bailleur) + champ("p_", "data-profil", "loyerActuel", "Loyer actuel (CHF)", p.loyerActuel, "", "number") +
+      champ("p_", "data-profil", "emploi", "Profession", p.emploi, "Ex. technicien en microtechnique") + champ("p_", "data-profil", "employeur", "Employeur", p.employeur) +
+      champ("p_", "data-profil", "depuis", "En poste depuis", p.depuis, "Ex. août 2024") +
       champ("p_", "data-profil", "personnes", "Personnes dans le ménage", p.personnes, "", "number") + champ("p_", "data-profil", "revenu", "Revenu mensuel brut du ménage (CHF)", p.revenu, "", "number") +
       champ("p_", "data-profil", "entree", "Date d'entrée souhaitée", p.entree, "Ex. 1er janvier 2027") +
       '</div><p class="note">Beaucoup de régies attendent un loyer qui ne dépasse pas environ un tiers du revenu brut. C\'est un seuil usuel, pas une règle légale.</p></section>' +
@@ -307,6 +321,13 @@
       '<div class="champ"><label for="l_sel">Annonce concernée</label><select id="l_sel">' + opts + "</select></div>" +
       '<div class="champ"><label for="lettre">Texte</label><textarea id="lettre" rows="16"></textarea></div>' +
       '<div class="actions"><button type="button" class="btn plein" id="l_copier">Copier le texte</button><button type="button" class="btn" id="l_regen">Régénérer depuis le profil</button></div></section>' +
+      '<section class="carte pad pile"><h2>Fiche de candidature</h2><p class="note">Toutes les rubriques que demandent les formulaires des régies, dans le même ordre. À garder ouverte pendant que vous remplissez un formulaire, ou à joindre à un e-mail.</p>' +
+      '<textarea id="fiche" rows="14" readonly aria-label="Fiche de candidature"></textarea><div class="actions"><button type="button" class="btn plein" id="f_copier">Copier la fiche</button></div></section>' +
+      '<section class="pile" id="formulaires"><h2>Formulaires des régies</h2><p class="note">Liens relevés sur le site de chaque régie. Chaque régie exige son propre formulaire, signé.</p><div class="carte lignes">' +
+      REGIES.map(function (r) {
+        return "<div><div><b>" + esc(r.nom) + "</b>" + r.docs.map(function (d) { return "<small>" + esc(d.t) + " · " + GENRE[d.k] + (d.n ? " · " + esc(d.n) : "") + "</small>"; }).join("") + '</div><div class="actions">' +
+          r.docs.map(function (d, i) { return '<a class="btn petit' + (i ? "" : " plein") + '" href="' + esc(d.u) + '" target="_blank" rel="noopener noreferrer">' + (d.k === "ligne" ? "S\'inscrire" : d.k === "page" ? "Ouvrir" : "PDF") + "</a>"; }).join("") + "</div></div>";
+      }).join("") + "</div></section>" +
       '<section class="carte pad pile"><h2>Mes données</h2><p class="note">' + (stockage ? "Profil, critères et candidatures sont enregistrés dans ce navigateur uniquement. Pour les retrouver sur un autre appareil, exportez le fichier ici puis importez-le là-bas." : "Ce navigateur refuse l'enregistrement local : les données seront perdues à la fermeture. Exportez-les pour les conserver.") + "</p>" +
       '<div class="actions"><button type="button" class="btn" id="d_export">Exporter mes données</button><label class="btn" for="d_import">Importer un fichier</label><input id="d_import" type="file" accept="application/json,.json" hidden>' +
       '<button type="button" class="btn discret" id="d_effacer">Tout effacer</button></div><textarea id="d_texte" rows="5" readonly hidden aria-label="Données exportées"></textarea></section>';
@@ -315,6 +336,15 @@
     var n = C.DOCS.filter(function (d) { return S.docs[d.k]; }).length, t = $("#avance"), j = $("#jauge");
     if (t) t.textContent = n + " / " + C.DOCS.length;
     if (j) j.style.width = Math.round(n / C.DOCS.length * 100) + "%";
+  }
+  function ecrireFiche() {
+    var z = $("#fiche"); if (!z) return;
+    var p = S.profil, v = function (x) { return x && String(x).trim() ? String(x).trim() : "à compléter"; }, rev = num(p.revenu);
+    z.value = ["CANDIDAT", "Nom et prénom : " + v(p.nom), "Date de naissance : " + v(p.naissance), "Nationalité ou permis : " + v(p.nationalite), "État civil : " + v(p.situation),
+      "Téléphone ou e-mail : " + v(p.contact), "", "LOGEMENT ACTUEL", "Adresse : " + v(p.adresse), "Régie ou bailleur : " + v(p.bailleur), "Loyer actuel : " + (num(p.loyerActuel) ? chf(num(p.loyerActuel)) : "à compléter"),
+      "", "SITUATION PROFESSIONNELLE", "Profession : " + v(p.emploi), "Employeur : " + v(p.employeur), "En poste depuis : " + v(p.depuis), "Revenu mensuel brut du ménage : " + (rev ? chf(rev) : "à compléter"),
+      "", "MÉNAGE", "Nombre de personnes : " + v(p.personnes), "Date d'entrée souhaitée : " + v(p.entree),
+      "", "PIÈCES JOINTES", C.DOCS.filter(function (d) { return S.docs[d.k]; }).map(function (d) { return "- " + d.t; }).join("\n") || "aucune pièce cochée dans le dossier"].join("\n");
   }
   function ecrireLettre() {
     var ta = $("#lettre"); if (!ta) return;
@@ -388,7 +418,7 @@
     box.innerHTML = VUES[v]();
     if (v === "logements") rendreListe();
     if (v === "suivi") rendreSuivi();
-    if (v === "dossier") { avance(); ecrireLettre(); }
+    if (v === "dossier") { avance(); ecrireLettre(); ecrireFiche(); }
     majOnglets(v);
     if (garder) {
       window.scrollTo(0, y);
@@ -428,8 +458,8 @@
     else if (t.id === "f_tri") { F.tri = t.value; affiches = PAGE; sauver(); rendreListe(); }
     else if (t.id === "s_tri") { triSuivi = t.value; rendreSuivi(); }
     else if (t.id === "l_sel") { lettrePour = t.value; ecrireLettre(); }
-    else if (t.dataset.doc) { S.docs[t.dataset.doc] = t.checked; sauver(); avance(); }
-    else if (t.dataset.profil || t.dataset.crit) { ecrireLettre(); }
+    else if (t.dataset.doc) { S.docs[t.dataset.doc] = t.checked; sauver(); avance(); ecrireFiche(); }
+    else if (t.dataset.profil || t.dataset.crit) { ecrireLettre(); ecrireFiche(); }
     else if (t.dataset.act === "statut" || t.dataset.act === "visite") {
       var id = t.closest("[data-id]").dataset.id, l = S.suivis.filter(function (x) { return x.id === id; })[0]; if (!l) return;
       if (t.dataset.act === "statut") l.statut = t.value; else l.visite = t.value;
@@ -482,8 +512,8 @@
     if (t.dataset.fproj) { filtreProjet = t.dataset.fproj; rendre(true); return; }
     if (t.dataset.projet) { var pi = S.projets.indexOf(t.dataset.projet); if (pi >= 0) S.projets.splice(pi, 1); else S.projets.push(t.dataset.projet); sauver(); rendre(true); return; }
     if (t.id === "l_regen") { ecrireLettre(); toast("Lettre régénérée"); return; }
-    if (t.id === "l_copier") {
-      var ta = $("#lettre"), fin = function () { ta.focus(); ta.select(); toast("Texte sélectionné : copiez-le avec le menu de votre appareil"); };
+    if (t.id === "l_copier" || t.id === "f_copier") {
+      var ta = $(t.id === "l_copier" ? "#lettre" : "#fiche"), fin = function () { ta.focus(); ta.select(); toast("Texte sélectionné : copiez-le avec le menu de votre appareil"); };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function () { toast("Texte copié"); }, fin); else fin();
       return;
     }

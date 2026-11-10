@@ -1,8 +1,8 @@
 /* Logéo : réseau d'abord, copie locale en secours. L'application reste consultable hors ligne avec les dernières annonces vues. */
-var CACHE = "logeo-1";
+var CACHE = "logeo-2";
 var DISTANT = "https://raw.githubusercontent.com/";
 self.addEventListener("install", function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(["./", "app.css", "app.js", "contenu.js", "icon.svg", "manifest.webmanifest"]); }).then(function () { return self.skipWaiting(); }));
+  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(["./", "app.css", "app.js", "contenu.js", "regies.js", "icon.svg", "manifest.webmanifest"]); }).then(function () { return self.skipWaiting(); }));
 });
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));

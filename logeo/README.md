@@ -7,6 +7,7 @@ Logements à louer dans le canton de Genève : annonces relevées automatiquemen
 | Élément | Rôle |
 |---|---|
 | `logeo/` | Le site (HTML, CSS, JavaScript sans dépendance). Installable sur téléphone comme une application. |
+| `logeo/regies.js` | Base des formulaires de candidature des régies (liens vers leurs PDF et portails d'inscription). |
 | `logeo/data/listings.json` | Jeu d'annonces de secours, utilisé si le fichier à jour est injoignable. |
 | `tools/logeo/` | La collecte : `collect.mjs` appelle un lecteur par source (`flatfox.mjs`, `immobilier.mjs`). |
 | `.github/workflows/logeo-collecte.yml` | Lance la collecte toutes les 30 minutes et publie `listings.json` sur la branche `logeo-data`. |

@@ -9,7 +9,7 @@ window.LOGEO_CONTENU = (function () {
     { k: "contrat", t: "Contrat de travail ou attestation de l'employeur", d: "Confirme l'emploi et le taux d'activité." },
     { k: "rc", t: "Attestation d'assurance responsabilité civile", d: "Souvent exigée avant la signature du bail." },
     { k: "bailleur", t: "Attestation du bailleur actuel", d: "Ou dernière quittance de loyer." },
-    { k: "lettre", t: "Lettre de candidature", d: "Générée dans l'onglet Lettre, à adapter à chaque annonce." }
+    { k: "lettre", t: "Lettre de candidature", d: "Générée plus bas dans cette page, à adapter à chaque annonce." }
   ];
   var GIMP = "https://www.geneve.ch/themes/logement-finances-vie-economique/portail-location-gerance-immobiliere-municipale";
   var ACCES = [
