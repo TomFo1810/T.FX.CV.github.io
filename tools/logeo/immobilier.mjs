@@ -1,6 +1,7 @@
 // immobilier.ch : pages de résultats publiques (autorisées par robots.txt).
 // Le site limite la lecture automatisée : on lit quelques pages par passage, et on s'arrête dès qu'il refuse.
 import { commune } from "./communes.mjs";
+import { classer } from "./categories.mjs";
 
 const BASE = "https://www.immobilier.ch";
 const LISTE = n => `${BASE}/fr/louer/appartement-maison/geneve/page-${n}`;
@@ -40,7 +41,7 @@ export function analyser(html) {
     const loc = tete.replace(/^\d{4}\s*/, "").replace(/\s+GE$/, "");
     const s = nombre(g(/class="space">\s*([\d.,'’]+)/));
     const ll = (g(/data-latlng="([^"]*)"/) || "").split(",").map(Number);
-    items.push({
+    const x = {
       id: "im-" + num, src: "immobilier", ag: texte(g(/link-result-agency[^>]*>\s*<img[^>]*alt="([^"]*)"/)).replace(/\s+[–-]\s+.*$/, ""),
       t: (titres[href] || type).trim().slice(0, 140), ty: type.replace(/\s*[\d.,]+\s*pi[èe]ces?.*$/i, "").trim(),
       k: seg[3] === "maison" ? "maison" : "app",
@@ -50,7 +51,9 @@ export function analyser(html) {
       npa, loc, com: commune(seg[5], npa) || commune(loc, npa) || loc,
       adr: /^contactez/i.test(reste) ? "" : reste, d: "", meuble: /meubl/i.test(type), temp: false,
       u: BASE + href, la: ll[0] ? +ll[0].toFixed(4) : null, lo: ll[1] ? +ll[1].toFixed(4) : null
-    });
+    };
+    x.cat = classer(x, "");
+    items.push(x);
   }
   return { total, pages: total ? Math.ceil(total / PAR_PAGE) : null, items };
 }

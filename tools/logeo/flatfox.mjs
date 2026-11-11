@@ -1,5 +1,6 @@
 // flatfox.ch : interface publique (JSON). Lecture complète du canton à chaque passage.
 import { NPA, commune } from "./communes.mjs";
+import { classer } from "./categories.mjs";
 
 const API = "https://flatfox.ch/api/v1";
 const CANTON = { west: 5.95, east: 6.32, south: 46.12, north: 46.37 };
@@ -39,7 +40,7 @@ export async function lireFlatfox(get) {
       const loyer = r.rent_gross || r.price_display || r.rent_net || null;
       if (loyer != null && loyer < 300) continue;                // places de parc mal classées
       const p = parseFloat(r.number_of_rooms) || null;
-      out.push({
+      const x = {
         id: "ff-" + r.pk, src: "flatfox", ag: (r.agency && r.agency.name) || "",
         t: (r.description_title || r.short_title || "").trim().slice(0, 140),
         k, p, s: r.surface_living || null,
@@ -49,7 +50,9 @@ export async function lireFlatfox(get) {
         u: "https://flatfox.ch" + String(r.url || r.short_url || "").replace(/^\/en\//, "/fr/"),
         la: r.latitude ? +r.latitude.toFixed(4) : null, lo: r.longitude ? +r.longitude.toFixed(4) : null,
         pub: r.published || r.created || null
-      });
+      };
+      x.cat = classer({ ...x, chambre: r.object_type === "SINGLE_ROOM" }, r.description);
+      out.push(x);
     }
   }
   return { items: out, complet: true, note: ids.length + " objets dans la zone, " + out.length + " logements à louer dans le canton" };

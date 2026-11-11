@@ -8,6 +8,8 @@ Logements à louer dans le canton de Genève : annonces relevées automatiquemen
 |---|---|
 | `logeo/` | Le site (HTML, CSS, JavaScript sans dépendance). Installable sur téléphone comme une application. |
 | `logeo/regies.js` | Base des formulaires de candidature des régies (liens vers leurs PDF et portails d'inscription). |
+| `logeo/communes-geo.js` | Contours des communes du canton, pour la carte (fond de secours si le plan des rues ne charge pas). |
+| `logeo/vendor/`, `logeo/fonts/` | Leaflet 1.9.4 (carte, licence BSD) et la police Geist (licence SIL OFL), servis depuis le site. |
 | `logeo/data/listings.json` | Jeu d'annonces de secours, utilisé si le fichier à jour est injoignable. |
 | `tools/logeo/` | La collecte : `collect.mjs` appelle un lecteur par source (`flatfox.mjs`, `immobilier.mjs`). |
 | `.github/workflows/logeo-collecte.yml` | Lance la collecte toutes les 30 minutes et publie `listings.json` sur la branche `logeo-data`. |
@@ -19,6 +21,14 @@ Logements à louer dans le canton de Genève : annonces relevées automatiquemen
 3. Le site recharge ce fichier toutes les 5 minutes et affiche l'heure de la dernière collecte.
 
 La collecte ne tourne que depuis la branche par défaut du dépôt. Elle peut aussi être lancée à la main : onglet Actions, « Logéo – collecte des annonces », Run workflow.
+
+## Catégories
+
+`tools/logeo/categories.mjs` classe chaque annonce : sous-location ou durée limitée, colocation, chambre, maison, studio, appartement. Le classement se fait sur le type donné par la source, le titre et, pour flatfox, la description.
+
+## Carte
+
+Les annonces avec coordonnées sont placées exactement (point plein). Les autres sont dispersées autour du centre de leur commune (cercle vide). Plan des rues : OpenStreetMap.
 
 ## Sources
 

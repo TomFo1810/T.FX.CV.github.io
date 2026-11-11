@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import { lireFlatfox } from "./flatfox.mjs";
 import { lireImmobilier } from "./immobilier.mjs";
+import { classer } from "./categories.mjs";
 
 const arg = (n, d) => { const i = process.argv.indexOf("--" + n); return i > 0 ? process.argv[i + 1] : d; };
 const OUT = arg("out", "logeo/data/listings.json"), PREV = arg("prev", OUT), PAGES = +arg("pages", 4);
@@ -87,6 +88,7 @@ let items = [];
   });
 }
 
+for (const x of items) if (x.src !== "flatfox" || !x.cat) x.cat = classer(x, "");   // le titre suffit hors flatfox : on reclasse à chaque passage
 const visibles = items.filter(x => !x.dbl).length;
 if (!visibles) { console.error("Aucune annonce : rien n'est écrit."); process.exit(1); }
 fs.mkdirSync(OUT.replace(/[^/]+$/, "") || ".", { recursive: true });

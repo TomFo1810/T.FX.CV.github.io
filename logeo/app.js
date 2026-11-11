@@ -50,7 +50,7 @@
       profil: { nom: "", contact: "", naissance: "", nationalite: "", situation: "", adresse: "", bailleur: "", loyerActuel: "", emploi: "", employeur: "", depuis: "", personnes: "1", revenu: "", entree: "" },
       crit: { loyerMax: "", piecesMin: "", communes: "" },
       docs: {}, projets: [], suivis: [],
-      filtres: { q: "", com: "", p: "tous", max: "", type: "", qui: "", tri: "recent", crit: false, neuf: false },
+      filtres: { q: "", com: "", p: "tous", max: "", cat: "", qui: "", tri: "recent", crit: false, neuf: false, vue: "liste" },
       visite: 0
     };
   }
@@ -72,6 +72,11 @@
   var D = { genere: null, sources: {}, items: [] }, TOUS = [], PARID = {}, charge = false, enCours = false, erreurReseau = false;
   var affiches = PAGE, filtreSuivi = "tous", triSuivi = "recent", lettrePour = "", filtreProjet = "tous";
 
+  /* Catégories : clé, libellé, couleur du point sur la carte. */
+  var CATS = [["app", "Appartement", "#0071e3"], ["studio", "Studio", "#8250df"], ["maison", "Maison", "#1a7f37"],
+    ["coloc", "Colocation", "#e8590c"], ["chambre", "Chambre", "#d6336c"], ["sousloc", "Sous-location ou durée limitée", "#9a6700"]];
+  var CAT = {}; CATS.forEach(function (c) { CAT[c[0]] = c; });
+  function cat(l) { return CAT[l.cat] ? l.cat : l.k === "maison" ? "maison" : l.k === "coloc" ? "coloc" : "app"; }
   function total(l) { return l.l == null ? null : l.l; }
   function particulier(l) { return l.src === "flatfox" && !l.ag; }
   function estNeuf(l) { return !!l.vu0 && Date.now() - temps(l.vu0) < NEUF_H * 3600000; }
@@ -139,7 +144,7 @@
     var L = TOUS.filter(function (l) {
       var t = total(l);
       if (F.com && l.com !== F.com) return false;
-      if (F.type && l.k !== F.type) return false;
+      if (F.cat && cat(l) !== F.cat) return false;
       if (F.qui && (particulier(l) ? "part" : "regie") !== F.qui) return false;
       if (max > 0 && (t == null || t > max)) return false;
       if (F.p !== "tous") {
@@ -172,8 +177,8 @@
     faits.push(esc((l.npa ? l.npa + " " : "") + (l.loc && l.loc !== l.com ? l.loc + " (" + l.com + ")" : l.com)));
     if (l.adr) faits.push(esc(l.adr));
     if (estNeuf(l)) marques += '<span class="badge neuf">Nouveau · ' + esc(ilya(temps(l.vu0))) + "</span>";
-    if (l.k === "maison") marques += '<span class="badge">Maison</span>';
-    if (l.k === "coloc") marques += '<span class="badge">Colocation</span>';
+    var ct = cat(l);
+    if (ct !== "app") marques += '<span class="badge"><i class="cat-pt" style="--c:' + CAT[ct][2] + '"></i>' + CAT[ct][1] + "</span>";
     if (l.meuble) marques += '<span class="badge">Meublé</span>';
     if (l.temp) marques += '<span class="badge">Durée limitée</span>';
     if (l.d) marques += '<span class="badge">Libre : ' + esc(l.d) + "</span>";
@@ -200,7 +205,8 @@
     }).join("");
     var depuis = visitePrec ? TOUS.filter(function (l) { return temps(l.vu0) > visitePrec; }).length : 0;
     var neufs = TOUS.filter(estNeuf).length;
-    var actifs = (F.q ? 1 : 0) + (F.com ? 1 : 0) + (F.p !== "tous" ? 1 : 0) + (F.max ? 1 : 0) + (F.type ? 1 : 0) + (F.qui ? 1 : 0) + (F.crit ? 1 : 0) + (F.neuf ? 1 : 0);
+    var nc = {}; TOUS.forEach(function (l) { var k = cat(l); nc[k] = (nc[k] || 0) + 1; });
+    var actifs = (F.q ? 1 : 0) + (F.com ? 1 : 0) + (F.p !== "tous" ? 1 : 0) + (F.max ? 1 : 0) + (F.cat ? 1 : 0) + (F.qui ? 1 : 0) + (F.crit ? 1 : 0) + (F.neuf ? 1 : 0);
     return '<section class="hero"><h1>Se loger à Genève.<br><span>Sans y passer ses soirées.</span></h1>' +
       '<p>Les annonces du canton réunies et relues en continu. Vos candidatures, votre dossier et les formulaires des régies au même endroit.</p>' +
       '<div class="chiffres"><div><b>' + TOUS.length + '</b><span>logements à louer</span></div><div><b>' + neufs + '</b><span>nouveaux en 48 heures</span></div>' +
@@ -210,21 +216,97 @@
       '<div class="champ"><label for="f_q">Recherche</label><input id="f_q" type="search" placeholder="Rue, quartier, régie, numéro postal" value="' + esc(F.q) + '"></div>' +
       '<div class="champ"><label for="f_com">Commune</label><select id="f_com"><option value="">Toutes</option>' + coms.map(function (k) { return '<option value="' + esc(k) + '"' + (F.com === k ? " selected" : "") + ">" + esc(k) + " (" + cc[k] + ")</option>"; }).join("") + "</select></div>" +
       '<div class="champ"><label for="f_max">Loyer maximum</label><input id="f_max" type="number" min="0" step="50" inputmode="numeric" placeholder="CHF" value="' + esc(F.max) + '"></div>' +
-      '<div class="champ"><label for="f_type">Type</label><select id="f_type">' + opt([["", "Tous"], ["app", "Appartement"], ["maison", "Maison"], ["coloc", "Colocation"]], F.type) + "</select></div>" +
       '<div class="champ"><label for="f_qui">Annonceur</label><select id="f_qui">' + opt([["", "Tous"], ["regie", "Régies et agences"], ["part", "Particuliers"]], F.qui) + "</select></div></div>" +
+      '<div class="puces" role="group" aria-label="Catégorie"><span class="lbl">Catégorie</span><button type="button" class="puce" data-fcat="" aria-pressed="' + !F.cat + '">Toutes</button>' +
+      CATS.map(function (c) { return '<button type="button" class="puce" data-fcat="' + c[0] + '" aria-pressed="' + (F.cat === c[0]) + '"><i class="cat-pt" style="--c:' + c[2] + '"></i>' + c[1] + "<b>" + (nc[c[0]] || 0) + "</b></button>"; }).join("") + "</div>" +
       '<div class="puces" role="group" aria-label="Nombre de pièces"><span class="lbl">Pièces</span>' + puces + "</div>" +
       '<div class="puces"><button type="button" class="puce" data-bascule="neuf" aria-pressed="' + !!F.neuf + '">Nouvelles seulement</button>' +
       '<button type="button" class="puce" data-bascule="crit" aria-pressed="' + !!F.crit + '">Selon mes critères</button>' +
       (actifs ? '<button type="button" class="btn petit discret" data-raz>Réinitialiser</button>' : "") + "</div></div></details>" +
-      '<div class="barre"><div class="compte" id="compte"></div><div class="tri"><label for="f_tri">Tri</label><select id="f_tri">' +
+      '<div class="barre"><div class="bascule" role="group" aria-label="Affichage"><button type="button" data-vue="liste" aria-pressed="' + (F.vue !== "carte") + '">Liste</button><button type="button" data-vue="carte" aria-pressed="' + (F.vue === "carte") + '">Carte</button></div>' +
+      '<div class="compte" id="compte"></div><div class="tri"' + (F.vue === "carte" ? " hidden" : "") + '><label for="f_tri">Tri</label><select id="f_tri">' +
       opt([["recent", "Plus récentes"], ["prix", "Loyer croissant"], ["prix-d", "Loyer décroissant"], ["surface", "Plus grande surface"], ["pieces", "Plus de pièces"]], F.tri) + "</select></div></div>" +
-      '<div class="carte liste" id="liste"></div><button type="button" class="btn plus" id="plus" hidden></button>';
+      (F.vue === "carte" ? '<div class="carte plan" id="liste"><div id="carte" role="application" aria-label="Carte des logements"></div><div class="legende" id="legende"></div></div>' : '<div class="carte liste" id="liste"></div>') +
+      '<button type="button" class="btn plus" id="plus" hidden></button>';
   }
+
+  /* ---------- Carte ---------- */
+  var plan = null, calque = null, fondCommunes = null, planVue = { c: [46.212, 6.135], z: 12 }, CENTRES = null;
+  function fermerCarte() {
+    if (!plan) return;
+    try { planVue = { c: [plan.getCenter().lat, plan.getCenter().lng], z: plan.getZoom() }; plan.remove(); } catch (e) {}
+    plan = null; calque = null;
+  }
+  function centres() {
+    if (CENTRES) return CENTRES;
+    CENTRES = {};
+    (window.LOGEO_COMMUNES || []).forEach(function (c) {
+      var a = 0, b = 0, n = 0; c.r[0].forEach(function (p) { a += p[0]; b += p[1]; n++; });
+      CENTRES[norm(c.n).replace(/^le /, "")] = [a / n, b / n];
+    });
+    return CENTRES;
+  }
+  function hache(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function position(l) {
+    if (l.la && l.lo) return { p: [l.la, l.lo], approx: false };
+    var c = centres()[norm(l.com).replace(/^le /, "")]; if (!c) return null;
+    var h = hache(l.id), ang = (h % 3600) / 3600 * 2 * Math.PI, r = .0012 + ((h >>> 12) % 1000) / 1000 * .0045;   // dispersé autour du centre de la commune
+    return { p: [c[0] + Math.sin(ang) * r, c[1] + Math.cos(ang) * r * 1.45], approx: true };
+  }
+  function bulle(l) {
+    var t = total(l), f = [], ct = cat(l), on = suivi(l.id);
+    if (l.p != null) f.push(pieces(l.p));
+    if (l.s) f.push(fp(l.s) + " m²");
+    f.push(esc((l.npa ? l.npa + " " : "") + (l.loc || l.com)));
+    return '<div class="bulle"><div class="prix">' + (t == null ? "Loyer sur demande" : chf(t)) + '</div><b>' + esc(l.t || "Logement à louer") + '</b><div class="faits">' + f.join(" · ") + "</div>" +
+      '<div class="faits"><i class="cat-pt" style="--c:' + CAT[ct][2] + '"></i>' + CAT[ct][1] + (l.adr ? " · " + esc(l.adr) : "") + "</div>" +
+      '<div class="actions"><a class="btn petit" href="' + esc(lien(l.u)) + '" target="_blank" rel="noopener noreferrer">Voir l\'annonce</a>' +
+      '<button type="button" class="btn petit ' + (on ? "actif" : "plein") + '" data-suivre="' + esc(l.id) + '">' + (on ? "Suivi" : "Suivre") + "</button></div></div>";
+  }
+  function rendreCarte(liste) {
+    var el = $("#carte"), LF = window.L; if (!el) return;
+    if (!LF) { el.innerHTML = '<p class="vide"><b>Carte indisponible</b>Le module de carte n\'a pas pu être chargé. La liste reste disponible.</p>'; return; }
+    if (!plan) {
+      var racine = document.documentElement, sombre = racine.dataset.theme === "dark" || (racine.dataset.theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      el.classList.toggle("sombre-tuiles", sombre);
+      plan = LF.map(el, { minZoom: 10, maxZoom: 18 }).setView(planVue.c, planVue.z);
+      var trait = getComputedStyle(racine).getPropertyValue("--encre3").trim() || "#888", fond = getComputedStyle(racine).getPropertyValue("--carte").trim() || "#fff";
+      fondCommunes = LF.layerGroup((window.LOGEO_COMMUNES || []).map(function (c) {
+        return LF.polygon(c.r, { color: trait, weight: 1, opacity: .45, fillColor: fond, fillOpacity: 0, interactive: false });
+      })).addTo(plan);
+      var secours = false;
+      LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>' })
+        .on("tileerror", function () {                     // sans fond de carte : on remplit les communes pour garder des repères
+          if (secours) return; secours = true;
+          el.classList.remove("sombre-tuiles");
+          fondCommunes.eachLayer(function (p) { p.setStyle({ fillOpacity: 1, opacity: .7 }); });
+          var n = $("#planNote"); if (n) n.hidden = false;
+        }).addTo(plan);
+      calque = LF.layerGroup().addTo(plan);
+      plan.on("moveend", function () { planVue = { c: [plan.getCenter().lat, plan.getCenter().lng], z: plan.getZoom() }; });
+    }
+    calque.clearLayers();
+    var approx = 0, sans = 0, nb = {};
+    // les positions approximatives d'abord, pour que les positions exactes restent au-dessus
+    liste.map(function (l) { return { l: l, q: position(l) }; }).sort(function (a, b) { return (b.q && b.q.approx ? 1 : 0) - (a.q && a.q.approx ? 1 : 0); }).forEach(function (o) {
+      var l = o.l, q = o.q, ct = cat(l); nb[ct] = (nb[ct] || 0) + 1;
+      if (!q) { sans++; return; }
+      if (q.approx) approx++;
+      LF.circleMarker(q.p, q.approx ? { radius: 5, color: CAT[ct][2], weight: 1.5, opacity: .7, fillColor: CAT[ct][2], fillOpacity: .12 } : { radius: 6.5, color: "#ffffff", weight: 1.5, fillColor: CAT[ct][2], fillOpacity: .95 })
+        .bindPopup(function () { return bulle(l); }, { maxWidth: 300 }).addTo(calque);
+    });
+    $("#legende").innerHTML = CATS.filter(function (c) { return nb[c[0]]; }).map(function (c) { return '<span><i class="cat-pt" style="--c:' + c[2] + '"></i>' + c[1] + " · " + nb[c[0]] + "</span>"; }).join("") +
+      (approx ? '<span class="approx">Cercles vides : ' + approx + " annonces sans adresse, placées dans leur commune" + (sans ? " · " + sans + " non placées" : "") + "</span>" : "") +
+      '<span class="approx" id="planNote" hidden>Fond de carte indisponible ici : seuls les contours des communes sont affichés.</span>';
+    setTimeout(function () { if (plan) plan.invalidateSize(); }, 60);
+  }
+
   function rendreListe() {
     var box = $("#liste"); if (!box) return;
     var L = filtrer();
     $("#compte").innerHTML = L.length + " <span>sur " + TOUS.length + " logements</span>";
     var m = $("#plus");
+    if (F.vue === "carte") { m.hidden = true; rendreCarte(L); return; }
     if (!L.length) { box.innerHTML = '<p class="vide"><b>Aucun logement ne correspond</b>Élargissez le loyer, les pièces ou la commune, ou réinitialisez les filtres.</p>'; m.hidden = true; return; }
     box.innerHTML = L.slice(0, affiches).map(ligneBien).join("");
     m.hidden = L.length <= affiches;
@@ -415,6 +497,7 @@
     var y = window.scrollY, actif = document.activeElement && document.activeElement.id, pos = null;
     try { if (actif && document.activeElement.selectionStart != null) pos = document.activeElement.selectionStart; } catch (e) {}
     if (garder && v !== "logements" && v !== "sources" && v !== "suivi") { majOnglets(v); return; }   // on ne réécrit pas un formulaire en cours de saisie
+    fermerCarte();
     box.innerHTML = VUES[v]();
     if (v === "logements") rendreListe();
     if (v === "suivi") rendreSuivi();
@@ -453,7 +536,6 @@
   document.addEventListener("change", function (e) {
     var t = e.target;
     if (t.id === "f_com") { F.com = t.value; affiches = PAGE; sauver(); rendreListe(); }
-    else if (t.id === "f_type") { F.type = t.value; affiches = PAGE; sauver(); rendreListe(); }
     else if (t.id === "f_qui") { F.qui = t.value; affiches = PAGE; sauver(); rendreListe(); }
     else if (t.id === "f_tri") { F.tri = t.value; affiches = PAGE; sauver(); rendreListe(); }
     else if (t.id === "s_tri") { triSuivi = t.value; rendreSuivi(); }
@@ -483,6 +565,8 @@
   document.addEventListener("click", function (e) {
     var t = e.target.closest("button, [data-suivre]"); if (!t) return;
     if (t.id === "etat") { actualiser(true); return; }
+    if (t.dataset.fcat != null) { F.cat = t.dataset.fcat; affiches = PAGE; sauver(); rendre(true); return; }
+    if (t.dataset.vue) { F.vue = t.dataset.vue; sauver(); rendre(true); return; }
     if (t.dataset.fp) { F.p = t.dataset.fp; affiches = PAGE; sauver(); rendre(true); return; }
     if (t.dataset.bascule) {
       var k = t.dataset.bascule;
